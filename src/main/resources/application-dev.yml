@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/emptimehub_dev
+    username: postgres
+    password: admin
+
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed/dev
+
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:8081
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
+

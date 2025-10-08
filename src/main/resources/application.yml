@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: EmpTimeHub
+
+server:
+  port: 8081
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  profiles:
+    active: local
+
+jwt:
+  secret: dGhpc0lzQWJhc2U2NFNhZmVTZWNyZXRLZXkxMjM=====================
+  expiration: 36000000
+
+app:
+  initial-setup-required: true
+  license-check-enabled: true
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+      type:
+        descriptor:
+          sql:
+            BasicBinder: TRACE
+upload:
+  dir: uploads/images
