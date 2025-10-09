@@ -5,10 +5,10 @@
 -- -----------------------------
 -- Users
 -- -----------------------------
-INSERT INTO users (user_id, user_name, email, password, role)
+INSERT INTO users (user_id, user_name, company_email, password, role)
 VALUES
 ('11111111-1111-1111-1111-111111111111', 'Admin User', 'admin@example.com', 'adminpass', 'ADMIN'),
-('22222222-2222-2222-2222-222222222222', 'Employee One', 'emp1@example.com', 'emppass', 'EMPLOYEE'),
+('22222222-2222-2222-2222-222222222222', 'Employee One', 'emp1@example.com', '$2a$12$dhiS8HyhfkOqWMOnAeeVA.VRMdvtUjvDKtUdgc5PRemcdfRbFHw8K', 'EMPLOYEE'),
 ('33333333-3333-3333-3333-333333333333', 'Client One', 'client1@example.com', 'clientpass', 'CLIENT');
 
 -- -----------------------------
@@ -96,3 +96,10 @@ VALUES
 INSERT INTO admin (admin_id, user_id, full_name, email, contact_number, address_id)
 VALUES
 ('eeeeeeee-5555-eeee-5555-eeeeeeee5555', '11111111-1111-1111-1111-111111111111', 'Admin User', 'admin@example.com', '1234567890', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+-- ----------------------------
+-- TIMESHEET
+-- ----------------------------
+INSERT INTO timesheet (timesheet_id,employee_id,client_id,work_date,hours_worked,task_name,task_description,status)
+VALUES
+  ('a1b2c3d4-e5f6-7890-1234-56789abcdef0','66666666-6666-6666-6666-666666666666','44444444-4444-4444-4444-444444444444','2025-10-09',8.00,'Fix bugs','Worked on frontend bug fixes and API integration','SUBMITTED'),
+  ('123e4567-e89b-12d3-a456-426614174000','66666666-6666-6666-6666-666666666666','44444444-4444-4444-4444-444444444444','2025-10-10',7.50,'Check code quality','Worked on backend bug fixes and code quality','APPROVED');

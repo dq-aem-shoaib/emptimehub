@@ -52,10 +52,14 @@ public class EndpointConstants {
 
 
     //super admin
-
-
     public static final String SUPER_ADMIN_API = WEB_API_PREFIX + "/superadmin";
     public static final String SUPER_ADMIN_VIEW = SUPER_ADMIN_API + VIEW;
     public static final String IMAGE_UPLOAD_URL = SUPER_ADMIN_API + "/uploadimage";
     public static final String SUPER_ADMIN_UPDATE = SUPER_ADMIN_API + "/update/superadmin";
+
+    // Employee
+    public static final String EMPLOYEE_API = WEB_API_PREFIX + "/employee";
+    public static final String VIEW_ALL_TIMESHEET = EMPLOYEE_API + VIEW + "/timesheet";
+    public static final String EMPLOYEE_TIMESHEET_VIEW = EMPLOYEE_API + VIEW + "/timesheet/{timesheetId}";
+    public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/register";
 }

@@ -36,6 +36,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String inputKey = loginRequest.getInputKey();
         String password = loginRequest.getPassword();
 
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(inputKey, password)
@@ -45,7 +46,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         User user = userRepository.findByUserName(inputKey)
-                        .orElseGet(() -> userRepository.findByEmail(inputKey)
+                        .orElseGet(() -> userRepository.findByCompanyEmail(inputKey)
                                 .orElseThrow(() -> new UsernameNotFoundException(
                                         "User not found by given ID, Mobile or Email ID: ")));
 

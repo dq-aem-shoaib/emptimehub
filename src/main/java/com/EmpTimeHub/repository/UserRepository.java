@@ -12,14 +12,14 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, String>, JpaSpecificationExecutor<User> {
     Optional<User> findByUserName(String inputKey);
 
-    Optional<User> findByEmail(String emailId);
+    Optional<User> findByCompanyEmail(String emailId);
 
     boolean existsByUserName(String superAdmin);
 
     @Query("SELECT u FROM User u WHERE u.userId = :id")
     Optional<User> findByIdWithRole(@Param("id") UUID id);
 
-    @Query("SELECT u FROM User u WHERE u.email = :email")
+    @Query("SELECT u FROM User u WHERE u.companyEmail = :email")
     Optional<User> findByEmailWithUserType(@Param("email") String email);
 
 }

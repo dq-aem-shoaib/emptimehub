@@ -26,7 +26,7 @@ private UserRepository userRepo;
     public UserDetails loadUserByUsername(String inputKey) throws UsernameNotFoundException {
 
         User user = userRepo.findByUserName(inputKey)
-        .or(() -> userRepo.findByEmail(inputKey))
+        .or(() -> userRepo.findByCompanyEmail(inputKey))
         .orElseThrow(() -> new UsernameNotFoundException("User not found with identifier: " + inputKey));
     String roleName = user.getRole().name();
         return buildUserDetails(user);
@@ -41,7 +41,7 @@ private UserRepository userRepo;
                 .getRole().name();
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userRole);
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(), user.getPassword(), Collections.singleton(authority));
+                user.getCompanyEmail(), user.getPassword(), Collections.singleton(authority));
     }
 
 }

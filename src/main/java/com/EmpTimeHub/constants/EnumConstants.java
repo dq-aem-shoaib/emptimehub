@@ -15,4 +15,8 @@ public class EnumConstants {
     public enum LeaveStatus {
         PENDING, APPROVED, REJECTED
     }
+
+    public enum WorkRequest{
+        SUBMITED,APPROVED,PENDING,REJECTED;
+    }
 }
