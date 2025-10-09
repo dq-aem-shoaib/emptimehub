@@ -1,24 +1,28 @@
 package com.EmpTimeHub.dto;
 
+import com.EmpTimeHub.entity.Address;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EmployeeLoginResponseDTO {
-    private String employeeId;
-    private String fullName;
+    private UUID employeeId;
+    private String firstName;
+    private String lastName;
     private String contactNumber;
-    private String address;
+    private Address address;
     private LocalDate dateOfBirth;
     private LocalDate dateOfJoining;
     private String designation;
     private BigDecimal rateCard;
+    private UUID clientId;
     private String panNumber;
     private Integer availableLeaves;
     private String aadharNumber;

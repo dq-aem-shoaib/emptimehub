@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "employee") // matches SQL table name
+@Table(name = "employee")
 public class Employee {
 
     @Id
@@ -26,27 +26,46 @@ public class Employee {
     @Column(name = "employee_id", updatable = false, nullable = false)
     private UUID employeeId;
 
-    // Relationship to User (Many Employees can be linked to one User)
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    /**
+     * Each employee is tied to one unique user account.
+     * When the employee is deleted, the user can also be removed if needed (cascade = ALL optional).
+     */
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_user"))
     private User user;
 
-    // Relationship to Client (nullable)
+    /** Optional relationship to Client — can be NULL */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id")
+    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_employee_client"))
     private Client client;
 
-    @Column(name = "full_name", nullable = false, length = 255)
-    private String fullName;
+    /** Each employee has a unique address record */
+    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_address"))
+    private Address address;
 
-    @Column(nullable = false, length = 255)
-    private String email;
+    /** Each employee has unique bank details */
+    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @JoinColumn(name = "bank_account_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_bank"))
+    private BankDetails bankDetails;
+
+    @Column(name = "first_name", nullable = false, length = 50)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false, length = 50)
+    private String lastName;
+
+    @Column(name = "personal_email", nullable = false, length = 100)
+    private String personalEmail;
+
+    @Column(name = "company_email", nullable = false, length = 100)
+    private String companyEmail;
 
     @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
-    @Column(columnDefinition = "TEXT")
-    private String address;
+    @Column(name = "currency", length = 10)
+    private String currency;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
@@ -54,7 +73,7 @@ public class Employee {
     @Column(name = "date_of_joining")
     private LocalDate dateOfJoining;
 
-    @Column(length = 100)
+    @Column(name = "designation", length = 100)
     private String designation;
 
     @Column(name = "rate_card", precision = 10, scale = 2)
@@ -69,17 +88,36 @@ public class Employee {
     @Column(name = "aadhar_number", length = 20)
     private String aadharNumber;
 
-    @Column(name = "account_number", length = 30)
-    private String accountNumber;
+    // File URLs for documents
+    @Column(name = "pan_card_url", length = 255)
+    private String panCardUrl;
 
-    @Column(length = 20)
+    @Column(name = "aadhar_card_url", length = 255)
+    private String aadharCardUrl;
+
+    @Column(name = "bank_passbook_url", length = 255)
+    private String bankPassbookUrl;
+
+    @Column(name = "tenth_cft_url", length = 255)
+    private String tenthCftUrl;
+
+    @Column(name = "inter_cft_url", length = 255)
+    private String interCftUrl;
+
+    @Column(name = "degree_cft_url", length = 255)
+    private String degreeCftUrl;
+
+    @Column(name = "post_graduation_cft_url", length = 255)
+    private String postGraduationCftUrl;
+
+    @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE"; // ACTIVE | INACTIVE
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }
