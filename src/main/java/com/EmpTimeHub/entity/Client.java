@@ -2,8 +2,8 @@ package com.EmpTimeHub.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "client") // matches SQL table name exactly
+@Table(name = "client")
 public class Client {
 
     @Id
@@ -24,10 +24,15 @@ public class Client {
     @Column(name = "client_id", updatable = false, nullable = false)
     private UUID clientId;
 
-    // Relationship with User (many clients can belong to one user)
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    // Each client has one unique user (One-to-One)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_client_user"))
     private User user;
+
+    // Each client has one unique address (One-to-One)
+    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_client_address"))
+    private Address address;
 
     @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
@@ -35,23 +40,26 @@ public class Client {
     @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
-    @Column(length = 255)
+    @Column(name = "email", length = 255)
     private String email;
 
-    @Column(columnDefinition = "TEXT")
-    private String address;
+    @Column(name = "gst", length = 30)
+    private String gst;
+
+    @Column(name = "currency", length = 10)
+    private String currency;
 
     @Column(name = "pan_number", length = 20)
     private String panNumber;
 
-    @Column(length = 20)
+    @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE"; // ACTIVE | INACTIVE
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

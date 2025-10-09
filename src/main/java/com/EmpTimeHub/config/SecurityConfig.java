@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 "/web/api/v1/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/uploads/images/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/web/api/v1/user/register").permitAll()

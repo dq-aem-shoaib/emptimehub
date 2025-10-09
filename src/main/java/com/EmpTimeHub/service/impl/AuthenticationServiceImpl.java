@@ -10,6 +10,7 @@ import com.EmpTimeHub.repository.UserRepository;
 import com.EmpTimeHub.service.AuthenticationService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -69,19 +70,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             employeeRepository.findByUser_UserId(user.getUserId()).ifPresentOrElse(employee -> {
 
-                employeeLoginResponseDTO.setEmployeeId(employee.getEmployeeId().toString());
-                employeeLoginResponseDTO.setFullName(employee.getFullName());
-                employeeLoginResponseDTO.setContactNumber(employee.getContactNumber());
-                employeeLoginResponseDTO.setAddress(employee.getAddress());
-                employeeLoginResponseDTO.setDateOfBirth(employee.getDateOfBirth());
-                employeeLoginResponseDTO.setDateOfJoining(employee.getDateOfJoining());
-                employeeLoginResponseDTO.setDesignation(employee.getDesignation());
-                employeeLoginResponseDTO.setRateCard(employee.getRateCard());
-                employeeLoginResponseDTO.setPanNumber(employee.getPanNumber());
-                employeeLoginResponseDTO.setAvailableLeaves(employee.getAvailableLeaves());
-                employeeLoginResponseDTO.setAadharNumber(employee.getAadharNumber());
-                employeeLoginResponseDTO.setAccountNumber(employee.getAccountNumber());
-                employeeLoginResponseDTO.setStatus(employee.getStatus());
+                BeanUtils.copyProperties(employee , employeeLoginResponseDTO);
+                employeeLoginResponseDTO.setClientId(employee.getClient().getClientId());
                 employeeLoginResponseDTO.setResponseMessage("Employee login successful!");
                 employeeLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
             }, () -> employeeLoginResponseDTO.setResponseMessage("Employee details not found for this user."));

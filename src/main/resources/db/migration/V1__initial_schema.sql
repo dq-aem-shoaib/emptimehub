@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- -----------------------------
--- Table: user
+-- Table: users
 -- -----------------------------
 CREATE TABLE users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,33 +14,67 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- -----------------------------
+-- Table: address
+-- -----------------------------
+CREATE TABLE address (
+    address_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    house_no VARCHAR(20) NOT NULL,
+    street_name VARCHAR(100) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    country VARCHAR(50) NOT NULL,
+    pincode VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- =====================================
--- CLIENT TABLE
--- =====================================
+-- -----------------------------
+-- Table: client
+-- -----------------------------
 CREATE TABLE client (
     client_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     company_name VARCHAR(255) NOT NULL,
     contact_number VARCHAR(20),
     email VARCHAR(255),
-    address TEXT,
+    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
+    gst VARCHAR(30),
+    currency VARCHAR(10),
     pan_number VARCHAR(20),
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- -----------------------------
+-- Table: bank_details
+-- -----------------------------
+CREATE TABLE bank_details (
+    bank_account_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_holder_name VARCHAR(100) NOT NULL,
+    account_number VARCHAR(30) NOT NULL UNIQUE,
+    ifsc_code VARCHAR(20) NOT NULL,
+    bank_name VARCHAR(100),
+    branch_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- -----------------------------
 -- Table: employee
 -- -----------------------------
 CREATE TABLE employee (
     employee_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    client_id UUID NULL REFERENCES "client"(client_id) ON DELETE SET NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    client_id UUID NULL REFERENCES client(client_id) ON DELETE SET NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    personal_email VARCHAR(100) NOT NULL,
+    company_email VARCHAR(100) NOT NULL,
     contact_number VARCHAR(20),
-    address TEXT,
+    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
+    currency VARCHAR(10),
     date_of_birth DATE,
     date_of_joining DATE,
     designation VARCHAR(100),
@@ -48,16 +82,22 @@ CREATE TABLE employee (
     pan_number VARCHAR(20),
     available_leaves NUMERIC(5),
     aadhar_number VARCHAR(20),
-    account_number VARCHAR(30),
+    bank_account_id UUID NOT NULL REFERENCES bank_details(bank_account_id) ON DELETE CASCADE,
+    pan_card_url VARCHAR(255),
+    aadhar_card_url VARCHAR(255),
+    bank_passbook_url VARCHAR(255),
+    tenth_cft_url VARCHAR(255),
+    inter_cft_url VARCHAR(255),
+    degree_cft_url VARCHAR(255),
+    post_graduation_cft_url VARCHAR(255),
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- =====================================
--- LEAVE TABLE
--- =====================================
+-- -----------------------------
+-- Table: employee_leave
+-- -----------------------------
 CREATE TABLE employee_leave (
     leave_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
@@ -66,12 +106,13 @@ CREATE TABLE employee_leave (
     type VARCHAR(20) CHECK (type IN ('PAID','UNPAID','SICK','CASUAL')),
     reason TEXT,
     status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING','APPROVED','REJECTED')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
--- TIMESHEET TABLE
--- =====================================
+-- -----------------------------
+-- Table: timesheet
+-- -----------------------------
 CREATE TABLE timesheet (
     timesheet_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
@@ -80,12 +121,13 @@ CREATE TABLE timesheet (
     hours_worked DECIMAL(5,2) NOT NULL,
     task_description TEXT,
     status VARCHAR(20) DEFAULT 'SUBMITTED' CHECK (status IN ('SUBMITTED','APPROVED','REJECTED')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
--- SALARY TABLE
--- =====================================
+-- -----------------------------
+-- Table: salary
+-- -----------------------------
 CREATE TABLE salary (
     salary_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
@@ -98,9 +140,9 @@ CREATE TABLE salary (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
--- INVOICE TABLE
--- =====================================
+-- -----------------------------
+-- Table: invoice
+-- -----------------------------
 CREATE TABLE invoice (
     invoice_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
@@ -111,9 +153,9 @@ CREATE TABLE invoice (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- =====================================
--- INVOICE_DETAIL TABLE
--- =====================================
+-- -----------------------------
+-- Table: invoice_detail
+-- -----------------------------
 CREATE TABLE invoice_detail (
     invoice_detail_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_id UUID NOT NULL REFERENCES invoice(invoice_id) ON DELETE CASCADE,
@@ -125,8 +167,11 @@ CREATE TABLE invoice_detail (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- -----------------------------
+-- Table: device_sessions
+-- -----------------------------
 CREATE TABLE device_sessions (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     device_id UUID NOT NULL,
     device_name VARCHAR(100),
@@ -139,22 +184,28 @@ CREATE TABLE device_sessions (
     is_active BOOLEAN DEFAULT TRUE
 );
 
+-- -----------------------------
+-- Table: refresh_tokens
+-- -----------------------------
 CREATE TABLE refresh_tokens (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     token VARCHAR(100) UNIQUE NOT NULL,
     device_session_id UUID NOT NULL REFERENCES device_sessions(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
-
 );
+
+-- -----------------------------
+-- Table: admin
+-- -----------------------------
 CREATE TABLE admin (
     admin_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     contact_number VARCHAR(20),
-    address TEXT,
+    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

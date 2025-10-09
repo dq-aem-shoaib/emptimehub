@@ -1,6 +1,7 @@
 package com.EmpTimeHub.entity;
 
 import com.EmpTimeHub.constants.EnumConstants;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Table(name = "users") // matches the SQL table name exactly
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
     @Id
