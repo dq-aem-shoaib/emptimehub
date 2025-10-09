@@ -1,6 +1,8 @@
 spring:
   application:
     name: EmpTimeHub
+  profiles:
+    active: local
 
 server:
   port: 8081
@@ -15,8 +17,6 @@ server:
     baseline-on-migrate: true
     validate-on-migrate: true
 
-  profiles:
-    active: local
 
 jwt:
   secret: dGhpc0lzQWJhc2U2NFNhZmVTZWNyZXRLZXkxMjM=====================
@@ -37,3 +37,4 @@ logging:
             BasicBinder: TRACE
 upload:
   dir: uploads/images
+
