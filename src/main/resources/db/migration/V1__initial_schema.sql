@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE users (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    company_email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN','EMPLOYEE','CLIENT')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -119,8 +119,9 @@ CREATE TABLE timesheet (
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
     work_date DATE NOT NULL,
     hours_worked DECIMAL(5,2) NOT NULL,
+    task_name TEXT,
     task_description TEXT,
-    status VARCHAR(20) DEFAULT 'SUBMITTED' CHECK (status IN ('SUBMITTED','APPROVED','REJECTED')),
+    status VARCHAR(20) DEFAULT 'SUBMITTED' CHECK (status IN ('SUBMITTED','APPROVED','REJECTED','PENDING')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

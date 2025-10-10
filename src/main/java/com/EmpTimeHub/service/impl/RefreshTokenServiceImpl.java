@@ -126,7 +126,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
 
     public boolean isSessionActive(String userKey, UUID deviceId) {
-        User user = userRepository.findByEmail(userKey)
+        User user = userRepository.findByCompanyEmail(userKey)
                 .or(() -> userRepository.findByUserName(userKey))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
