@@ -99,7 +99,7 @@ CREATE TABLE employee (
 -- -----------------------------
 -- Table: timesheet
 -- -----------------------------
-CREATE TABLE timesheet (
+CREATE TABLE timesheets (
     timesheet_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
