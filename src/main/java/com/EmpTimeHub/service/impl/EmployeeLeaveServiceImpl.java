@@ -119,10 +119,11 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         // Send email to approver if available
         if (approver != null && approver.getUser() != null && approver.getUser().getCompanyEmail() != null) {
             String approverEmail = approver.getUser().getCompanyEmail();
+            String approverName = approver.getUser().getUserName();
             String mailSubject = request.getSubject();
-            String mailBody = request.getContext() + "\n\nBest regards,\n" + employee.getFirstName();
-
-            mailService.sendMail(employeeMail, approverEmail, mailSubject, mailBody, employee.getFirstName());
+            String mailBody = "Dear " + approverName + ",\n\n" + request.getContext()
+                    + "\n\nBest regards,\n" + employee.getFirstName();
+        mailService.sendMail(employeeMail, approverEmail, mailSubject, mailBody, employee.getFirstName());
             log.info("Leave approval email sent from '{}' to '{}'", employeeMail, approverEmail);
         }
 
@@ -266,73 +267,115 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     public LeaveResponseDTO updateLeave(LeaveRequestDTO request, String email) {
         log.info("Updating leave with leaveId={} for user '{}'", request.getLeaveId(), email);
 
+        //  Validate user and employee
         User user = userRepository.findByCompanyEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         Employee employee = employeeRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found for user: " + user.getUserId()));
 
         UUID leaveId = request.getLeaveId();
         EmployeeLeave existingLeave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found with ID: " + leaveId));
 
+        //  Authorization check
         if (!existingLeave.getEmployee().getEmployeeId().equals(employee.getEmployeeId())) {
-            log.warn("User '{}' attempted to update leaveId={} which does not belong to them", email, leaveId);
+            log.warn("Unauthorized attempt: '{}' tried to update leaveId={} not belonging to them", email, leaveId);
             throw new AccessDeniedException("You are not authorized to update this leave");
         }
 
+        // Only pending leaves can be updated
         if (existingLeave.getStatus() != EnumConstants.LeaveStatus.PENDING) {
-            log.warn("LeaveId={} cannot be updated because its status is {}", leaveId, existingLeave.getStatus());
+            log.warn("LeaveId={} update rejected — current status={}", leaveId, existingLeave.getStatus());
             throw new IllegalStateException("Only pending leaves can be updated");
         }
 
-        LocalDate fromDate = request.getFromDate();
-        LocalDate toDate = request.getToDate();
-
-        // Calculate holidays and weekends
-        List<Holiday> holidays = holidayRepository.findByHolidayDateBetween(fromDate, toDate);
-        int holidayCount = holidays.size();
-
-        int weekendCount = 0;
-        LocalDate tempDate = fromDate;
-        while (!tempDate.isAfter(toDate)) {
-            DayOfWeek day = tempDate.getDayOfWeek();
-            if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-                weekendCount++;
-            }
-            tempDate = tempDate.plusDays(1);
+        //  Apply non-null updates
+        if (request.getType() != null) {
+            existingLeave.setType(request.getType());
         }
 
-        int totalHolidays = holidayCount + weekendCount;
-        int totalDays = (int) ChronoUnit.DAYS.between(fromDate, toDate) + 1;
-        int workingDays = totalDays - totalHolidays;
+        if (request.getSubject() != null && !request.getSubject().isBlank()) {
+            existingLeave.setSubject(request.getSubject());
+        }
 
-        // Update leave details
-        existingLeave.setType(request.getType());
-        existingLeave.setSubject(request.getSubject());
-        existingLeave.setContext(request.getContext());
-        existingLeave.setFromDate(fromDate);
-        existingLeave.setToDate(toDate);
-        existingLeave.setUpdatedAt(LocalDateTime.now());
-        existingLeave.setWorkingDays(workingDays);
-        existingLeave.setHolidays(totalHolidays);
+        if (request.getContext() != null && !request.getContext().isBlank()) {
+            existingLeave.setContext(request.getContext());
+        }
 
-        // Send email to approver if specified
+
+        //  Recalculate date-related fields if dates changed
+        LocalDate fromDate = request.getFromDate() != null ? request.getFromDate() : existingLeave.getFromDate();
+        LocalDate toDate = request.getToDate() != null ? request.getToDate() : existingLeave.getToDate();
+
+        if (!fromDate.equals(existingLeave.getFromDate()) || !toDate.equals(existingLeave.getToDate())) {
+            List<Holiday> holidays = holidayRepository.findByHolidayDateBetween(fromDate, toDate);
+            int holidayCount = holidays.size();
+
+            int weekendCount = 0;
+            LocalDate tempDate = fromDate;
+            while (!tempDate.isAfter(toDate)) {
+                DayOfWeek day = tempDate.getDayOfWeek();
+                if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+                    weekendCount++;
+                }
+                tempDate = tempDate.plusDays(1);
+            }
+
+            int totalHolidays = holidayCount + weekendCount;
+            int totalDays = (int) ChronoUnit.DAYS.between(fromDate, toDate) + 1;
+            int workingDays = totalDays - totalHolidays;
+
+            existingLeave.setFromDate(fromDate);
+            existingLeave.setToDate(toDate);
+            existingLeave.setWorkingDays(workingDays);
+            existingLeave.setHolidays(totalHolidays);
+
+            log.info("Recalculated leave period for leaveId={}: workingDays={}, holidays={}", leaveId, workingDays, totalHolidays);
+        }
+
+        //  Handle approver (if provided)
         if (request.getApprovalName() != null && !request.getApprovalName().isBlank()) {
             Admin approver = adminRepository.findByFullName(request.getApprovalName())
                     .orElseThrow(() -> new EntityNotFoundException(
                             "Approver not found with name: " + request.getApprovalName()));
+
+            existingLeave.setApproval(approver);
+
+            // Send mail notification
             if (approver.getUser() != null && approver.getUser().getCompanyEmail() != null) {
+                String approverName = approver.getUser().getUserName();
+
+                // Determine subject and context: use request values if available, otherwise fallback
+                String subject = (request.getSubject() != null && !request.getSubject().isEmpty())
+                        ? request.getSubject()
+                        : existingLeave.getSubject();
+
+                String context = (request.getContext() != null && !request.getContext().isEmpty())
+                        ? request.getContext()
+                        : existingLeave.getContext();
+
+                String mailBody = "Dear " + approverName + ",\n\n"
+                        + context
+                        + "\n\nBest regards,\n"
+                        + employee.getFirstName();
+
                 mailService.sendMail(
                         employee.getCompanyEmail(),
                         approver.getUser().getCompanyEmail(),
-                        "Updated Leave Request: " + request.getSubject(),
-                        "Employee " + employee.getFirstName() + " updated their leave request.\n\n" + request.getContext(),
+                        "Updated Leave Request: " + subject,
+                        mailBody,
                         employee.getFirstName()
                 );
+
                 log.info("Approval email sent to '{}'", approver.getUser().getCompanyEmail());
             }
+
         }
 
+        //  Update timestamp
+        existingLeave.setUpdatedAt(LocalDateTime.now());
+
+        //  Save and return
         EmployeeLeave updatedLeave = leaveRepository.save(existingLeave);
         log.info("Leave updated successfully for leaveId={}", leaveId);
 
@@ -375,6 +418,113 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         leaveRepository.delete(leave);
         log.info("Leave deleted successfully for leaveId={} by user '{}'", leaveId, email);
+    }
+
+    /**
+     * Updates the status of a leave request (APPROVED or REJECTED) by an admin
+     * and sends an email notification to the employee.
+     *
+     * @param leaveId      UUID of the leave to update
+     * @param status       new leave status (APPROVED or REJECTED)
+     * @param adminComment optional comment from the admin
+     * @param adminEmail   email of the admin performing the update
+     * @return updated leave details as {@link LeaveResponseDTO}
+     * @throws EntityNotFoundException if the admin user, admin entity, or leave entity is not found
+     */
+    @Override
+    public LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String adminComment, String adminEmail) {
+        log.info("Admin '{}' updating leaveId={} with status={}", adminEmail, leaveId, status);
+
+        User user = userRepository.findByCompanyEmail(adminEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found with email: " + adminEmail));
+
+        Admin admin = adminRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("Admin not found for userId: " + user.getUserId()));
+
+        EmployeeLeave leave = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new EntityNotFoundException("Leave not found with id: " + leaveId));
+
+        if (status != null) {
+            leave.setStatus(status);
+        } else {
+            log.warn("Leave status is null for leaveId={}", leaveId);
+        }
+
+        leave.setAdminComment(adminComment != null ? adminComment : leave.getAdminComment());
+        leave.setApproval(admin);
+        leave.setUpdatedAt(LocalDateTime.now());
+
+        EmployeeLeave updatedLeave = leaveRepository.save(leave);
+        log.info("Leave status updated successfully: {}", updatedLeave.getStatus());
+
+        try {
+            sendLeaveStatusNotification(updatedLeave);
+        } catch (Exception e) {
+            log.error("Failed to send leave status email for leaveId={}: {}", updatedLeave.getLeaveId(), e.getMessage(), e);
+        }
+
+        return mapToResponse(updatedLeave);
+    }
+
+
+    /**
+     * Sends an email notification to the employee regarding the leave status update.
+     * Includes leave period, type, working days, holidays, and admin comment.
+     *
+     * @param leave the {@link EmployeeLeave} entity containing leave and employee details
+     */
+    private void sendLeaveStatusNotification(EmployeeLeave leave) {
+        if (leave == null || leave.getEmployee() == null) {
+            log.warn("Cannot send email: leave or employee is null for leaveId={}", leave != null ? leave.getLeaveId() : "null");
+            return;
+        }
+
+        try {
+            String employeeEmail = leave.getEmployee().getCompanyEmail();
+            String employeeName = leave.getEmployee().getFirstName();
+            String adminName = leave.getApproval() != null ? leave.getApproval().getFullName() : "Admin";
+
+            String subject = "Your Leave Request (" + (leave.getType() != null ? leave.getType() : "") + ") has been " + (leave.getStatus() != null ? leave.getStatus() : "");
+
+            String body = String.format("""
+                Dear %s,
+                
+                Your leave request has been %s.
+                
+                 Leave Period: %s to %s
+                 Type: %s
+                 Working Days: %d
+                 Holidays: %d
+                Admin Comment: %s
+
+                Regards,
+                %s
+                """,
+                    employeeName,
+                    leave.getStatus() != null ? leave.getStatus() : "UPDATED",
+                    leave.getFromDate(),
+                    leave.getToDate(),
+                    leave.getType() != null ? leave.getType() : "N/A",
+                    leave.getWorkingDays() != null ? leave.getWorkingDays() : 0,
+                    leave.getHolidays() != null ? leave.getHolidays() : 0,
+                    leave.getAdminComment() != null ? leave.getAdminComment() : "No comments",
+                    adminName
+            );
+
+            mailService.sendMail(
+                    leave.getApproval() != null && leave.getApproval().getUser() != null
+                            ? leave.getApproval().getUser().getCompanyEmail()
+                            : adminName ,
+                    employeeEmail,
+                    subject,
+                    body,
+                    adminName
+            );
+
+            log.info("Leave status notification email sent to employee '{}'", employeeEmail);
+        } catch (Exception e) {
+            log.error("Failed to send leave status email for leaveId={}: {}", leave.getLeaveId(), e.getMessage(), e);
+        }
     }
 
 

@@ -1,5 +1,6 @@
 package com.EmpTimeHub.controller;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.LeaveRequestDTO;
 import com.EmpTimeHub.dto.LeaveResponseDTO;
 import com.EmpTimeHub.dto.WebResponseDTO;
@@ -199,6 +200,35 @@ public class EmployeeLeaveController {
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Endpoint to update the status of an employee leave request (APPROVED or REJECTED) by an admin.
+     * <p>
+     * Only users with the role ADMIN can access this endpoint.
+     * The admin can optionally provide a comment when updating the leave status.
+     *
+     * @param leaveId     UUID of the leave to update (from the URL path)
+     * @param status      new leave status (APPROVED or REJECTED)
+     * @param comment     optional comment provided by the admin
+     * @param userDetails details of the authenticated admin performing the update
+     * @return {@link WebResponseDTO} containing the updated leave details in a {@link LeaveResponseDTO}
+     */
+    @PutMapping(EMPLOYEE_LEAVE_STATUS_UPDATE)
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeaveStatus(
+            @PathVariable UUID leaveId,
+            @RequestParam EnumConstants.LeaveStatus status,
+            @RequestParam(required = false) String comment,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        LeaveResponseDTO response = leaveService.updateLeaveStatus(leaveId, status, comment, userDetails.getUsername());
+        return ResponseEntity.ok(WebResponseDTO.<LeaveResponseDTO>builder()
+                .flag(true)
+                .status(200)
+                .message("Leave " + status.name().toLowerCase() + " successfully")
+                .response(response)
+                .build());
     }
 
 }

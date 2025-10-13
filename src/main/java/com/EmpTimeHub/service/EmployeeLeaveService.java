@@ -1,5 +1,6 @@
 package com.EmpTimeHub.service;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.LeaveRequestDTO;
 import com.EmpTimeHub.dto.LeaveResponseDTO;
 import org.springframework.data.domain.Page;
@@ -62,4 +63,16 @@ public interface EmployeeLeaveService {
      * @param email   Email of the employee requesting deletion.
      */
     void deleteLeave(UUID leaveId, String email);
+
+    /**
+     * Updates the status of a leave request (APPROVED/REJECTED) by an admin
+     * and sends an email notification to the employee.
+     *
+     * @param leaveId      ID of the leave to update
+     * @param status       new leave status
+     * @param adminComment optional admin comment
+     * @param adminEmail   admin's email performing the update
+     * @return updated leave details as {@link LeaveResponseDTO}
+     */
+    LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String adminComment, String adminEmail);
 }

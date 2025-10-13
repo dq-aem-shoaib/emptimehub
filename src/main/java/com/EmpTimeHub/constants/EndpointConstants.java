@@ -86,6 +86,7 @@ public class EndpointConstants {
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
     public static final String  EMPLOYEE_LEAVE_DELETE=EMPLOYEE_API+"/leave"+"/delete"+DELETE;
+    public static final String  EMPLOYEE_LEAVE_STATUS_UPDATE=EMPLOYEE_API+"/leave"+"/updateStatus"+"/{leaveId}";
 //common api for admin and employee
     public static final String COMMON_API = WEB_API_PREFIX + "/common";
     public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
