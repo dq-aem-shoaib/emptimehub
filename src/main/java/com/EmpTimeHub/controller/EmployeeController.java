@@ -40,7 +40,7 @@ public class EmployeeController {
 
 
     @GetMapping(EMPLOYEE_TIMESHEET_VIEW)
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('EMPLOYEE') OR hasRole('ADMIN')")
     public ResponseEntity<WebResponseDTO<TimeSheetResponseDto>> getTimeSheetDetails(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID timesheetId

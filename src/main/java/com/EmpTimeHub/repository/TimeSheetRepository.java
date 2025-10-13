@@ -21,4 +21,6 @@ public interface TimeSheetRepository extends JpaRepository<TimeSheet, UUID> {
     Page<TimeSheet> findByEmployeeAndWorkDateBetween(Employee employee, LocalDate startDate,
             LocalDate endDate, Pageable pageable);
 
+    Page<TimeSheet> findByWorkDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
+
 }

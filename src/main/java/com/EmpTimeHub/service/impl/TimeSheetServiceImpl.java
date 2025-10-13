@@ -2,16 +2,14 @@ package com.EmpTimeHub.service.impl;
 
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.TimeSheetResponseDto;
-import com.EmpTimeHub.entity.Client;
-import com.EmpTimeHub.entity.Employee;
-import com.EmpTimeHub.entity.Project;
-import com.EmpTimeHub.entity.TimeSheet;
+import com.EmpTimeHub.entity.*;
 import com.EmpTimeHub.exceptions.customExceptions.UserNotFoundException;
 import com.EmpTimeHub.exceptions.customExceptions.UserRoleNotFoundException;
 import com.EmpTimeHub.model.TimeSheetModel;
 import com.EmpTimeHub.repository.EmployeeRepository;
 import com.EmpTimeHub.repository.ProjectRepository;
 import com.EmpTimeHub.repository.TimeSheetRepository;
+import com.EmpTimeHub.repository.UserRepository;
 import com.EmpTimeHub.service.TimeSheetService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,6 +41,7 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     private final TimeSheetRepository timeSheetRepository;
     private final EmployeeRepository employeeRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     /**
      * Creates a new timesheet entry for the logged-in employee.
@@ -158,49 +158,73 @@ public class TimeSheetServiceImpl implements TimeSheetService {
                                                        LocalDate startDate, LocalDate endDate) {
         LOG.info("Fetching all timesheets for user: {}, page: {}, size: {}", loggedInUserEmail, page, size);
 
-        Employee emp = employeeRepository.getEmployeeByEmail(loggedInUserEmail);
-        if (emp == null) {
-            LOG.error("Employee not found for email: {}", loggedInUserEmail);
-            throw new UserNotFoundException("Employee not found");
-        }
+        User user = userRepository.findByCompanyEmail(loggedInUserEmail)
+                .orElseThrow(() -> new RuntimeException("User not found!!"));
 
-        String role = emp.getUser().getRole().name();
+        String role = user.getRole().name();
+
         if (!role.equals(EnumConstants.Role.EMPLOYEE.name()) && !role.equals(EnumConstants.Role.ADMIN.name())) {
             LOG.error("Unauthorized role: {}", role);
             throw new UserRoleNotFoundException("Only 'EMPLOYEE' and 'ADMIN' roles have access");
         }
 
-        Project project = projectRepository.findByEmployeeAndClient(emp, emp.getClient());
-
         Pageable pageable = PageRequest.of(page, size,
                 Sort.by(Sort.Direction.fromString(direction.toUpperCase()), orderBy));
 
         Page<TimeSheet> employeeTS;
-        if (startDate != null && endDate != null) {
-            LOG.debug("Applying date filter from {} to {}", startDate, endDate);
-            employeeTS = timeSheetRepository.findByEmployeeAndWorkDateBetween(emp, startDate, endDate, pageable);
+        Employee emp = null;
+        Project project = null;
+
+        if (role.equals(EnumConstants.Role.EMPLOYEE.name())) {
+            emp = employeeRepository.getEmployeeByEmail(loggedInUserEmail);
+            if (emp == null) {
+                LOG.error("Employee not found for email: {}", loggedInUserEmail);
+                throw new UserNotFoundException("Employee not found");
+            }
+
+            project = projectRepository.findByEmployeeAndClient(emp, emp.getClient());
+
+            if (startDate != null && endDate != null) {
+                LOG.debug("Employee - Applying date filter from {} to {}", startDate, endDate);
+                employeeTS = timeSheetRepository.findByEmployeeAndWorkDateBetween(emp, startDate, endDate, pageable);
+            } else {
+                employeeTS = timeSheetRepository.findByEmployee(emp, pageable);
+            }
+
         } else {
-            employeeTS = timeSheetRepository.findByEmployee(emp, pageable);
+
+            if (startDate != null && endDate != null) {
+                LOG.debug("Admin - Applying date filter from {} to {}", startDate, endDate);
+                employeeTS = timeSheetRepository.findByWorkDateBetween(startDate, endDate, pageable);
+            } else {
+                employeeTS = timeSheetRepository.findAll(pageable);
+            }
         }
 
         List<TimeSheetResponseDto> collect = employeeTS.stream()
-                .map(dto -> TimeSheetResponseDto.builder()
-                        .timesheetId(dto.getTimesheetId())
-                        .employeeId(dto.getEmployee().getEmployeeId())
-                        .employeeName(dto.getEmployee().getFirstName() + " " + dto.getEmployee().getLastName())
-                        .clientId(dto.getClient().getClientId())
-                        .clientName(dto.getClient().getCompanyName())
-                        .taskName(dto.getTaskName())
-                        .taskDescription(dto.getTaskDescription())
-                        .workDate(dto.getWorkDate())
-                        .workedHours(dto.getHoursWorked())
-                        .createdAt(dto.getCreatedAt())
-                        .updatedAt(dto.getUpdatedAt())
-                        .status(dto.getStatus())
-                        .projectName(project.getProjectName())
-                        .projectStartedAt(project.getStartDate())
-                        .projectEndedAt(project.getEndDate())
-                        .build())
+                .map(dto -> {
+                    Employee e = dto.getEmployee();
+                    Client c = dto.getClient();
+                    Project p = projectRepository.findByEmployeeAndClient(e, c); 
+
+                    return TimeSheetResponseDto.builder()
+                            .timesheetId(dto.getTimesheetId())
+                            .employeeId(e.getEmployeeId())
+                            .employeeName(e.getFirstName() + " " + e.getLastName())
+                            .clientId(c.getClientId())
+                            .clientName(c.getCompanyName())
+                            .taskName(dto.getTaskName())
+                            .taskDescription(dto.getTaskDescription())
+                            .workDate(dto.getWorkDate())
+                            .workedHours(dto.getHoursWorked())
+                            .createdAt(dto.getCreatedAt())
+                            .updatedAt(dto.getUpdatedAt())
+                            .status(dto.getStatus())
+                            .projectName(p != null ? p.getProjectName() : null)
+                            .projectStartedAt(p != null ? p.getStartDate() : null)
+                            .projectEndedAt(p != null ? p.getEndDate() : null)
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         LOG.info("Timesheets fetched successfully: {} records found", employeeTS.getTotalElements());
