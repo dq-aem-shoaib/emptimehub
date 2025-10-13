@@ -19,4 +19,9 @@ public class EnumConstants {
     public enum WorkRequest{
         SUBMITED,APPROVED,PENDING,REJECTED;
     }
+
+    public enum HolidayType {
+        PUBLIC, RELIGIOUS, COMPANY
+    }
+
 }

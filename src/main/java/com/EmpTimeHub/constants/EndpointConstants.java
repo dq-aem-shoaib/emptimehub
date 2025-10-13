@@ -33,7 +33,7 @@ public class EndpointConstants {
     public static final String ADMIN_VIEW = ADMIN_API + VIEW;
     public static final String ADMIN_UPDATE = ADMIN_API + UPDATE;
     public static final String ADMIN_DELETE = ADMIN_API + DELETE;
-
+    public static final String ADMIN_NAMES=ADMIN_API+"/getAllAdminNames";
     /**
      * User related endpoints
      */
@@ -62,4 +62,11 @@ public class EndpointConstants {
     public static final String VIEW_ALL_TIMESHEET = EMPLOYEE_API + VIEW + "/timesheet";
     public static final String EMPLOYEE_TIMESHEET_VIEW = EMPLOYEE_API + VIEW + "/timesheet/{timesheetId}";
     public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/register";
+    public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
+    public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
+    public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
+    public static final String  EMPLOYEE_LEAVE_DELETE=EMPLOYEE_API+"/leave"+"/delete"+DELETE;
+//common api for admin and employee
+    public static final String COMMON_API = WEB_API_PREFIX + "/common";
+    public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
 }

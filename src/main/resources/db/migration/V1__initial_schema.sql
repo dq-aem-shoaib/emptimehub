@@ -95,20 +95,6 @@ CREATE TABLE employee (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- -----------------------------
--- Table: employee_leave
--- -----------------------------
-CREATE TABLE employee_leave (
-    leave_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    type VARCHAR(20) CHECK (type IN ('PAID','UNPAID','SICK','CASUAL')),
-    reason TEXT,
-    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING','APPROVED','REJECTED')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- -----------------------------
 -- Table: timesheet
@@ -209,4 +195,35 @@ CREATE TABLE admin (
     address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- -----------------------------
+-- Table: employee_leave
+-- -----------------------------
+
+
+CREATE TABLE employee_leave (
+    leave_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
+    approval_id UUID REFERENCES admin(admin_id) ON DELETE SET NULL,
+    leave_type VARCHAR(50) NOT NULL,
+    from_date DATE NOT NULL,
+    to_date DATE NOT NULL,
+    subject VARCHAR(255),
+    context TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    admin_comment TEXT,
+    working_days NUMERIC(2),
+    holidays NUMERIC(2),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE holidays (
+    holiday_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    holiday_date DATE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
