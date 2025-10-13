@@ -36,7 +36,7 @@ public class EmployeeLeaveController {
     @PreAuthorize("hasRole('EMPLOYEE')")
     @PostMapping(EMPLOYEE_LEAVE_REQUEST)
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> applyLeave(
-            @RequestBody LeaveRequestDTO request,
+            @ModelAttribute LeaveRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         log.info("Employee '{}' is applying for leave from {} to {} of type {}",
@@ -150,7 +150,7 @@ public class EmployeeLeaveController {
     @PreAuthorize("hasRole('EMPLOYEE')")
     @PutMapping(EMPLOYEE_LEAVE_UPDATE)
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeave(
-            @RequestBody LeaveRequestDTO request,
+            @ModelAttribute LeaveRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         log.info("Employee '{}' is updating leave with leaveId={}", userDetails.getUsername(), request.getLeaveId());

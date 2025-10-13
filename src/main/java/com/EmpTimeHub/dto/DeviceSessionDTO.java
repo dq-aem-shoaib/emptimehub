@@ -24,6 +24,7 @@ public class DeviceSessionDTO {
     private String status;
     private TokenInfo token;
 
+    @Builder
     public static DeviceSessionDTO from(DeviceSession session) {
         return DeviceSessionDTO.builder()
                 .deviceId(session.getDeviceId())
