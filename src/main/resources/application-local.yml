@@ -6,7 +6,17 @@ spring:
 
   flyway:
     locations: classpath:db/seed/local,classpath:db/migration
-
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: manojkumarmengani281@gmail.com
+    password: phxbthxqtttqvswp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 cors:
   allowed-origins: http://localhost:8080
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS

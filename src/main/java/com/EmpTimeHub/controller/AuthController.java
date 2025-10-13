@@ -17,10 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 import java.time.ZoneId;
 import java.util.List;
@@ -61,7 +59,7 @@ public class AuthController {
     @PostMapping(LOGIN)
     @Operation(summary = "Login endpoint", description = "Accepts device headers for session tracking")
     public ResponseEntity<WebResponseDTO<ApiResponse<?>>> login(
-            @RequestBody LoginDTO loginRequest,
+            @ModelAttribute LoginDTO loginRequest,
             @RequestHeader(value = "X-Device-Id", required = false) String deviceIdHeader,
             @RequestHeader(value = "X-Device-Name", required = false) String deviceNameHeader,
             @RequestHeader(value = "User-Agent", required = false) String userAgent,
