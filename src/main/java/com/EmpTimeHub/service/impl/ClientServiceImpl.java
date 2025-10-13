@@ -49,7 +49,7 @@ public class ClientServiceImpl implements ClientService {
         //  Save User
         User user = User.builder()
                 .userName(username)
-                .email(clientModel.getEmail())
+                .companyEmail(clientModel.getEmail())
                 .password(encryptedPassword)
                 .role(EnumConstants.Role.EMPLOYEE)
                 .build();
