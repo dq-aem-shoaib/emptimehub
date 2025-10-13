@@ -14,6 +14,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class TimeSheetResponseDto {
+    private UUID timesheetId;
     private UUID clientId;
     private String clientName;
     private UUID employeeId;
@@ -22,6 +23,10 @@ public class TimeSheetResponseDto {
     private LocalDate workDate;
     private String taskName;
     private String taskDescription;
+    private String projectName;
+    private LocalDate projectStartedAt;
+    private LocalDate projectEndedAt;
     private String status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

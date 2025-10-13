@@ -90,4 +90,6 @@ public class EndpointConstants {
 //common api for admin and employee
     public static final String COMMON_API = WEB_API_PREFIX + "/common";
     public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
+    public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
+    public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
 }

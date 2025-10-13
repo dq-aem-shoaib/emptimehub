@@ -227,3 +227,12 @@ CREATE TABLE holidays (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE projects (
+    project_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
+    project_name VARCHAR(200) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL
+)
