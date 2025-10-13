@@ -31,8 +31,27 @@ public class EndpointConstants {
     public static final String ADMIN_API = WEB_API_PREFIX + "/admin";
     public static final String APPROVE_USER = ADMIN_API + "/approve/user/{userId}";
     public static final String ADMIN_VIEW = ADMIN_API + VIEW;
-    public static final String ADMIN_UPDATE = ADMIN_API + UPDATE;
+    public static final String ADMIN_UPDATE_EMP = ADMIN_API + UPDATE+"emp/{empId}";
+    public static final String ADMIN_UPDATE_CLIENT = ADMIN_API + UPDATE+"client/{clientId}";
     public static final String ADMIN_DELETE = ADMIN_API + DELETE;
+    public static final String ADD_EMPLOYEE = ADMIN_API + "/add/employee";
+    public static final String ADD_CLIENT = ADMIN_API + "/add/client";
+    public static final String ADMIN_GET_EMP = ADMIN_API + "/emp"+"/{empId}";
+    public static final String ADMIN_GET_ALL_EMP = ADMIN_API + "/emp/all";
+    public static final String ADMIN_GET_CLIENT = ADMIN_API + "/client"+"/{clientId}";
+    public static final String ADMIN_GET_ALL_CLIENT = ADMIN_API + "/client/all";
+    public static final String ADMIN_DELETE_EMP = ADMIN_API+"/{empId}";
+    public static final String ADMIN_DELETE_CLIENT = ADMIN_API+"/client/{clientId}";
+    public static final String ADMIN_UNASSIGN_CLIENT = ADMIN_API+"/emp/{empId}";
+
+
+
+
+
+
+
+
+
 
     /**
      * User related endpoints
