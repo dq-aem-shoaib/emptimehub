@@ -6,6 +6,7 @@ import com.EmpTimeHub.entity.TimeSheet;
 import com.EmpTimeHub.model.TimeSheetModel;
 import com.EmpTimeHub.service.TimeSheetService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
@@ -32,12 +35,12 @@ public class EmployeeController {
 
         TimeSheet timeSheet = timeSheetService.createTimeSheet(tsModel, userDetails.getUsername());
         return ResponseEntity.ok(new WebResponseDTO<>(
-                true,"Time Sheet is created Successfully", timeSheet));
+                true,"Time Sheet is created Successfully", HttpStatus.CREATED.value(),timeSheet));
     }
 
 
     @GetMapping(EMPLOYEE_TIMESHEET_VIEW)
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('EMPLOYEE') OR hasRole('ADMIN')")
     public ResponseEntity<WebResponseDTO<TimeSheetResponseDto>> getTimeSheetDetails(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable UUID timesheetId
@@ -45,17 +48,60 @@ public class EmployeeController {
 
         TimeSheetResponseDto oneTimeSheet = timeSheetService.getTimeSheetById(timesheetId, userDetails.getUsername());
 
-        WebResponseDTO<TimeSheetResponseDto> dto = new WebResponseDTO<>(true,"getting timesheet",oneTimeSheet);
+        WebResponseDTO<TimeSheetResponseDto> dto = new WebResponseDTO<>(
+                true,"getting timesheet by ID", HttpStatus.OK.value(), oneTimeSheet);
         return new ResponseEntity<WebResponseDTO<TimeSheetResponseDto>>(dto,HttpStatus.OK);
     }
 
     @GetMapping(VIEW_ALL_TIMESHEET)
-    @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<WebResponseDTO<TimeSheetResponseDto>> getTimeSheetDetails(
-            
+    @PreAuthorize("hasRole('EMPLOYEE') OR hasRole('ADMIN')")
+    public ResponseEntity<WebResponseDTO<List<TimeSheetResponseDto>>> getTimeSheetDetails(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(defaultValue = "createdAt") String orderBy,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @AuthenticationPrincipal UserDetails userDetails
     ){
-        WebResponseDTO<TimeSheetResponseDto> dto = new WebResponseDTO<>(true,"getting timesheet12");
 
-        return   new ResponseEntity<WebResponseDTO<TimeSheetResponseDto>>(dto,HttpStatus.OK);
+        Page<TimeSheetResponseDto> allTimeSheets = timeSheetService.getAllTimeSheets(page, size, direction, orderBy,
+                userDetails.getUsername(), startDate, endDate);
+        List<TimeSheetResponseDto> content = allTimeSheets.getContent();
+        long totalElements = allTimeSheets.getTotalElements();
+
+        WebResponseDTO<List<TimeSheetResponseDto>> dto = new WebResponseDTO<>(
+                true,"getting all timesheets",HttpStatus.OK.value(),content,totalElements);
+
+        return new ResponseEntity<WebResponseDTO<List<TimeSheetResponseDto>>>(dto,HttpStatus.OK);
     }
+
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PutMapping(EMPLOYEE_TIMESHEET_UPDATE)
+    public ResponseEntity<WebResponseDTO<String>> getTimeSheetUpdate(
+            @RequestParam UUID timesheetId,
+            @ModelAttribute TimeSheetModel sheetModel,
+            @AuthenticationPrincipal UserDetails userDetails
+    ){
+
+        timeSheetService.updateTimeSheet(timesheetId,sheetModel,userDetails.getUsername());
+        WebResponseDTO<String> dto = new WebResponseDTO<>(
+                true,"timesheet updated successfully",HttpStatus.OK.value());
+
+        return new ResponseEntity<WebResponseDTO<String>>(dto,HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @DeleteMapping(EMPLOYEE_TIMESHEET_DELETE)
+    public ResponseEntity<WebResponseDTO<String>> getTimeSheetDelete(
+            @RequestParam UUID timesheetId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ){
+
+        timeSheetService.deleteTimeSheet(timesheetId,userDetails.getUsername());
+        WebResponseDTO<String> dto = new WebResponseDTO<>(
+                true,"timesheet Deleted successfully",HttpStatus.OK.value());
+        return new ResponseEntity<WebResponseDTO<String>>(dto,HttpStatus.OK);
+    }
+
 }

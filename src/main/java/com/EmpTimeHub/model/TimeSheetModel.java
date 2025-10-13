@@ -1,17 +1,16 @@
 package com.EmpTimeHub.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class TimeSheetModel {
+    private LocalDate workDate;
     private BigDecimal hoursWorked;
     private String taskName;
     private String taskDescription;

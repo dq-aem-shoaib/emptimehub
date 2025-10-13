@@ -48,7 +48,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         //  Save User
         User user = User.builder()
                 .userName(username)
-                .email(employeeModel.getCompanyEmail())
+                .companyEmail(employeeModel.getCompanyEmail())
                 .password(encryptedPassword)
                 .role(EnumConstants.Role.EMPLOYEE)
                 .build();

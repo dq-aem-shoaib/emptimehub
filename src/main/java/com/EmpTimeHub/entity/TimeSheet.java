@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "timesheet")
+@Table(name = "timesheets")
 public class TimeSheet {
 
     @Id
@@ -27,7 +27,7 @@ public class TimeSheet {
     @Column(name = "timesheet_id", updatable = false, nullable = false)
     private UUID timesheetId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     @JsonBackReference
     private Employee employee;
@@ -57,6 +57,6 @@ public class TimeSheet {
     private LocalDateTime createdAt;
 
     @CreationTimestamp
-    @Column(name = "updated_at", updatable = false)
+    @Column(name = "updated_at", updatable = true)
     private LocalDateTime updatedAt;
 }

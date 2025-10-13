@@ -3,20 +3,18 @@ package com.EmpTimeHub.service;
 import com.EmpTimeHub.dto.TimeSheetResponseDto;
 import com.EmpTimeHub.entity.TimeSheet;
 import com.EmpTimeHub.model.TimeSheetModel;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
-import java.util.*;
 import java.util.UUID;
 
 public interface TimeSheetService {
     TimeSheet createTimeSheet(TimeSheetModel timeSheet, String loggedInUserEmail);
     TimeSheetResponseDto getTimeSheetById(UUID timesheetId, String loggedInUserEmail);
-    List<TimeSheet> getAllTimeSheets();
-    List<TimeSheet> getTimeSheetsByEmployee(UUID employeeId);
-    List<TimeSheet> getTimeSheetsByClient(UUID clientId);
-    List<TimeSheet> getTimeSheetsByDateRange(UUID employeeId, LocalDate startDate, LocalDate endDate);
-    List<TimeSheet> getTimeSheetsByStatus(String status);
-    TimeSheet updateTimeSheet(UUID timesheetId, TimeSheet updatedSheet);
+    Page<TimeSheetResponseDto> getAllTimeSheets(int page, int size, String direction, String orderBy,
+                                     String loggedInUserEmail, LocalDate startDate, LocalDate endDate);
+
+    void updateTimeSheet(UUID timesheetId,TimeSheetModel updatedSheet, String loggedInUserEmail);
     TimeSheet updateStatus(UUID timesheetId, String status);
-    void deleteTimeSheet(UUID timesheetId);
+    void deleteTimeSheet(UUID timesheetId, String loggedInUserEmail);
 }
