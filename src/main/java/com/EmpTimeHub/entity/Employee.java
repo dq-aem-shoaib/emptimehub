@@ -37,7 +37,7 @@ public class Employee {
     private User user;
 
     /** Optional relationship to Client — can be NULL */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_employee_client"))
     private Client client;
 

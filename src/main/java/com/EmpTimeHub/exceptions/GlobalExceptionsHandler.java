@@ -76,9 +76,6 @@ public class GlobalExceptionsHandler {
         return buildResponse(ex, request, HttpStatus.UNAUTHORIZED);
     }
 
-
-
-
     @ExceptionHandler(DeviceAlreadyRegisteredException.class)
     public ResponseEntity<WebResponseDTO<String>> handleDeviceAlreadyRegistered(DeviceAlreadyRegisteredException ex,WebRequest request) {
         return  buildResponse(ex,request,HttpStatus.CONFLICT);
