@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee,String> {
+public interface EmployeeRepository extends JpaRepository<Employee,UUID> {
     Optional<Employee> findByUser_UserId(UUID userId);
     @Query("FROM Employee e WHERE e.companyEmail = :gmail")
     Employee getEmployeeByEmail(@Param("gmail") String email);

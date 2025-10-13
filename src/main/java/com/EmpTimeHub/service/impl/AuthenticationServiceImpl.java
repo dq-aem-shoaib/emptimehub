@@ -80,7 +80,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
        return  new ApiResponse<>(employeeLoginResponseDTO,"Employee details  found for this user.");
         }
         else if(user.getRole().equals(EnumConstants.Role.ADMIN)){
-            return  new ApiResponse<>(null,"Admin details  found for this user.");
+            UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO();
+            BeanUtils.copyProperties(user , userLoginResponseDTO);
+            userLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
+
+            return  new ApiResponse<>(userLoginResponseDTO,"Admin details  found for this user.");
         }else {
             return  new ApiResponse<>(null,"User details not found for this user.");
         }
