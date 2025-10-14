@@ -24,4 +24,9 @@ public class EnumConstants {
         PUBLIC, RELIGIOUS, COMPANY
     }
 
+    public enum PaymentStatus {
+        PAID,
+        UNPAID
+    }
+
 }
