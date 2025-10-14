@@ -69,6 +69,8 @@ public class AuthController {
         String ipAddress = Optional.ofNullable(request.getHeader("X-Forwarded-For"))
                 .orElse(request.getRemoteAddr());
 
+        log.info("Username and password,{},{}",loginRequest.getInputKey(),loginRequest.getPassword());
+
         // Parse or Generate UUID from headers
         UUID deviceId = deviceIdHeader != null
                 ? UUID.fromString(deviceIdHeader)
