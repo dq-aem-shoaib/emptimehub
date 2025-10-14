@@ -45,6 +45,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 substring(employeeModel.getAadharNumber().length() - 4);
         String encryptedPassword = passwordEncoder.encode(rawPassword);
 
+        log.info("Employee added with username: {} and Password: {}",username,rawPassword);
+
         //  Save User
         User user = User.builder()
                 .userName(username)

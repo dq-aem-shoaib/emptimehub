@@ -46,6 +46,9 @@ public class ClientServiceImpl implements ClientService {
                 substring(clientModel.getPanNumber().length() - 4);
         //Encryption
         String encryptedPassword = passwordEncoder.encode(rawPassword);
+
+        log.info("Client added with username: {} and Password: {}",username,rawPassword);
+
         //  Save User
         User user = User.builder()
                 .userName(username)
