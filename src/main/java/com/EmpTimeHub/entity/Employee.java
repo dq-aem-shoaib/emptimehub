@@ -33,23 +33,39 @@ public class Employee {
      * When the employee is deleted, the user can also be removed if needed (cascade = ALL optional).
      */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_user"))
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_employee_user")
+    )
     private User user;
 
     /** Optional relationship to Client — can be NULL */
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_employee_client"))
+    @JoinColumn(
+            name = "client_id",
+            foreignKey = @ForeignKey(name = "fk_employee_client")
+    )
     private Client client;
-
-    /** Each employee has a unique address record */
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_address"))
-    private Address address;
 
     /** Each employee has unique bank details */
     @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "bank_account_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_bank"))
+    @JoinColumn(
+            name = "bank_account_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_employee_bank")
+    )
     private BankDetails bankDetails;
+
+    /** Self-referencing relationship — an employee can have a reporting manager */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "reporting_manager_id",
+            foreignKey = @ForeignKey(name = "fk_employee_reporting_manager")
+    )
+    private Employee reportingManager;
 
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;

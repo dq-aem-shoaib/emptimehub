@@ -2,6 +2,37 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- -----------------------------
+-- ENUM TYPES
+-- -----------------------------
+CREATE TYPE designation_enum AS ENUM (
+    'INTERN',
+    'TRAINEE',
+    'ASSOCIATE_ENGINEER',
+    'SOFTWARE_ENGINEER',
+    'SENIOR_SOFTWARE_ENGINEER',
+    'LEAD_ENGINEER',
+    'TEAM_LEAD',
+    'TECHNICAL_ARCHITECT',
+    'PROJECT_MANAGER',
+    'DELIVERY_MANAGER',
+    'DIRECTOR',
+    'VP_ENGINEERING',
+    'CTO',
+    'HR',
+    'FINANCE',
+    'OPERATIONS'
+);
+
+CREATE TYPE gender_enum AS ENUM ('MALE', 'FEMALE', 'OTHER');
+
+CREATE TYPE marital_status_enum AS ENUM ('SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED');
+
+CREATE TYPE address_type_enum AS ENUM ('PERMANENT', 'COMMUNICATION', 'OFFICE', 'EMERGENCY');
+
+CREATE TYPE status_enum AS ENUM ('ACTIVE', 'INACTIVE');
+
+
+-- -----------------------------
 -- Table: users
 -- -----------------------------
 CREATE TABLE users (
@@ -38,15 +69,29 @@ CREATE TABLE client (
     company_name VARCHAR(255) NOT NULL,
     contact_number VARCHAR(20),
     email VARCHAR(255),
-    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
     gst VARCHAR(30),
     currency VARCHAR(10),
+    tan_number VARCHAR(20),
     pan_number VARCHAR(20),
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- -----------------------------
+-- Table: client_poc
+-- -----------------------------
+CREATE TABLE client_poc (
+    poc_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    contact_number VARCHAR(20),
+    designation VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 -- -----------------------------
 -- Table: bank_details
 -- -----------------------------
@@ -61,28 +106,42 @@ CREATE TABLE bank_details (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+
 -- -----------------------------
--- Table: employee
+-- EMPLOYEE TABLE
 -- -----------------------------
 CREATE TABLE employee (
     employee_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     client_id UUID NULL REFERENCES client(client_id) ON DELETE SET NULL,
+
+    -- Basic Info
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     personal_email VARCHAR(100) NOT NULL,
     company_email VARCHAR(100) NOT NULL,
     contact_number VARCHAR(20),
-    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
-    currency VARCHAR(10),
+    alternate_contact_number VARCHAR(20),
+
+    -- Employment Info
+    designation designation_enum,
+    reporting_manager_id UUID NULL REFERENCES employee(employee_id) ON DELETE SET NULL,
     date_of_birth DATE,
     date_of_joining DATE,
-    designation VARCHAR(100),
     rate_card DECIMAL(10,2) DEFAULT 0,
     pan_number VARCHAR(20),
     available_leaves NUMERIC(5),
     aadhar_number VARCHAR(20),
     bank_account_id UUID NOT NULL REFERENCES bank_details(bank_account_id) ON DELETE CASCADE,
+
+    -- Personal Info
+    gender gender_enum,
+    marital_status marital_status_enum,
+    number_of_children INT DEFAULT 0 CHECK (number_of_children >= 0),
+    employee_photo_url VARCHAR(255),
+
+    -- Documents
     pan_card_url VARCHAR(255),
     aadhar_card_url VARCHAR(255),
     bank_passbook_url VARCHAR(255),
@@ -90,9 +149,33 @@ CREATE TABLE employee (
     inter_cft_url VARCHAR(255),
     degree_cft_url VARCHAR(255),
     post_graduation_cft_url VARCHAR(255),
-    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
+
+    -- Status
+    status status_enum DEFAULT 'ACTIVE',
+
+    -- Tracking
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------
+-- EMPLOYEE_ADDRESS LINKING TABLE
+-- -----------------------------
+CREATE TABLE employee_address (
+    employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
+    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
+    address_type address_type_enum NOT NULL,
+    PRIMARY KEY (employee_id, address_id)
+);
+
+-- -----------------------------
+-- CLIENT_ADDRESS LINKING TABLE
+-- -----------------------------
+CREATE TABLE client_address (
+    client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
+    address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
+    address_type address_type_enum NOT NULL,
+    PRIMARY KEY (client_id, address_id)
 );
 
 
