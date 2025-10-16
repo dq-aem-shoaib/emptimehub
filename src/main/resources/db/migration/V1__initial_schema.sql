@@ -301,6 +301,9 @@ CREATE TABLE employee_leave (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ----------------------------
+-- Holidays
+-- ----------------------------
 CREATE TABLE holidays (
     holiday_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     holiday_date DATE NOT NULL,
@@ -311,6 +314,9 @@ CREATE TABLE holidays (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ----------------------------
+-- Projects
+-- ----------------------------
 CREATE TABLE projects (
     project_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,

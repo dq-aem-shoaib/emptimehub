@@ -86,7 +86,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = Employee.builder()
                 .user(savedUser)
                 .client(client)
-                .address(address)      // Cascaded save
                 .bankDetails(bankDetails)
                 .firstName(employeeModel.getFirstName())
                 .lastName(employeeModel.getLastName())
@@ -180,18 +179,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employeeModel.getIfscCode() != null) bankDetails.setIfscCode(employeeModel.getIfscCode());
         if (employeeModel.getBranchName() != null) bankDetails.setBranchName(employeeModel.getBranchName());
 
-        // ---------- Address ----------
-        Address address = addressRepository.findById(employee.getAddress().getAddressId()).
-                orElseThrow(() -> new RuntimeException("address not found"));
-        if (employeeModel.getHouseNo() != null) address.setHouseNo(employeeModel.getHouseNo());
-        if (employeeModel.getStreetName() != null) address.setStreetName(employeeModel.getStreetName());
-        if (employeeModel.getCity() != null) address.setCity(employeeModel.getCity());
-        if (employeeModel.getState() != null) address.setState(employeeModel.getState());
-        if (employeeModel.getPinCode() != null) address.setPincode(employeeModel.getPinCode());
-        if (employeeModel.getCountry() != null) address.setCountry(employeeModel.getCountry());
-        addressRepository.save(address);
-
-
 
         // ---------- Document URLs ----------
         if (employeeModel.getPanCardUrl() != null) employee.setPanCardUrl(employeeModel.getPanCardUrl());
@@ -204,7 +191,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // Update timestamp
         employee.setUpdatedAt(LocalDateTime.now());
-
 
         employeeRepository.save(employee);
     }
