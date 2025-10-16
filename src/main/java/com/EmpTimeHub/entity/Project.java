@@ -27,12 +27,12 @@ public class Project {
     @Column(name = "project_id", updatable = false, nullable = false)
     private UUID projectId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "client_id", nullable = false)
     @JsonIgnore
     private Client client;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     @JsonBackReference
     private Employee employee;

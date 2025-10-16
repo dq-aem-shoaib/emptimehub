@@ -11,5 +11,5 @@ import java.util.UUID;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
-    public Project findByEmployeeAndClient(Employee emp, Client client);
+    public Project findByEmployeeAndClient(Employee employee, Client client);
 }
