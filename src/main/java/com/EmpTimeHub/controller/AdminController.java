@@ -243,7 +243,7 @@ public class AdminController {
      * @return ResponseEntity containing a WebResponseDTO with the list of admin names,
      *         a success flag, status code, and message.
      */
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE')")
     @GetMapping(ADMIN_NAMES)
     public ResponseEntity<WebResponseDTO<List<String>>> getAllAdminNames() {
         log.info("Request received to fetch all admin names");

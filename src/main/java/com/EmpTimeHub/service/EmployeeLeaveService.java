@@ -1,11 +1,14 @@
 package com.EmpTimeHub.service;
 
 import com.EmpTimeHub.constants.EnumConstants;
+import com.EmpTimeHub.dto.DateRangeRequestDTO;
 import com.EmpTimeHub.dto.LeaveRequestDTO;
 import com.EmpTimeHub.dto.LeaveResponseDTO;
+import com.EmpTimeHub.dto.WorkdayResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -70,9 +73,26 @@ public interface EmployeeLeaveService {
      *
      * @param leaveId      ID of the leave to update
      * @param status       new leave status
-     * @param adminComment optional admin comment
-     * @param adminEmail   admin's email performing the update
+     * @param managerComment optional admin comment
+     * @param managerEmail   admin's email performing the update
      * @return updated leave details as {@link LeaveResponseDTO}
      */
-    LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String adminComment, String adminEmail);
+    LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String managerComment, String managerEmail);
+
+    /**
+     * Calculate the number of working days between the given from and to dates,
+     * excluding weekends and company holidays.
+     *
+     * @param request the date range request containing fromDate and toDate
+     * @return WorkdayResponseDTO containing the total working days and any relevant details
+     */
+    WorkdayResponseDTO calculateWorkingDays(DateRangeRequestDTO request);
+
+    /**
+     * Get all company holidays as a map where the key is the date (yyyy-MM-dd)
+     * and the value is the holiday name.
+     *
+     * @return a map of holiday dates to holiday names
+     */
+    Map<String, String> getAllHolidaysMap();
 }

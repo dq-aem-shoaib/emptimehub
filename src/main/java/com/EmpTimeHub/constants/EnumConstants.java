@@ -5,7 +5,8 @@ public class EnumConstants {
     public enum Role {
         ADMIN,
         EMPLOYEE,
-        CLIENT
+        CLIENT,
+        MANAGER
     }
     // Enums for leave type and status
     public enum LeaveType {

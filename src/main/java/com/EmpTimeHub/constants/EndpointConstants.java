@@ -87,9 +87,14 @@ public class EndpointConstants {
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
     public static final String  EMPLOYEE_LEAVE_DELETE=EMPLOYEE_API+"/leave"+"/delete"+DELETE;
     public static final String  EMPLOYEE_LEAVE_STATUS_UPDATE=EMPLOYEE_API+"/leave"+"/updateStatus"+"/{leaveId}";
+
 //common api for admin and employee
     public static final String COMMON_API = WEB_API_PREFIX + "/common";
     public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
+    public static final String EMPLOYEE_WORKDAYS = EMPLOYEE_API + "/workDays";
+//COMPANY RELATED API'S
+    private static final String COMPANY=WEB_API_PREFIX+"/company";
+    public static final String COMPANY_HOLIDAYS=COMPANY+"/holidays";
 }

@@ -35,22 +35,24 @@ public class MailServiceImpl implements MailService {
      * @param to      Recipient's email address.
      * @param subject Subject of the email.
      * @param body    Body content of the email.
-     * @param name    Name of the sender (used in the email body or signature).
      */
     @Override
-    public void sendMail(String from, String to, String subject, String body, String name) {
+    public void sendMail(String from, String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-            helper.setFrom(new InternetAddress(from, name));
-            helper.setTo(to);
+
+            helper.setFrom(from);      // plain sender email address
+            helper.setTo(to);          // recipient
             helper.setSubject(subject);
-            helper.setText(body, false);
+            helper.setText(body, false); // false = plain text (not HTML)
 
             mailSender.send(message);
+
             log.info("Email sent successfully from '{}' to '{}', subject='{}'", from, to, subject);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+        } catch (MessagingException  e) {
             log.error("Failed to send email from '{}' to '{}', subject='{}': {}", from, to, subject, e.getMessage(), e);
         }
     }
+
 }

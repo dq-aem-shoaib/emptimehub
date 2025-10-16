@@ -23,7 +23,7 @@ public class LeaveResponseDTO {
     private String subject;
     private String context;
     private String status;
-    private String adminComment;
+    private String managerComment;
     private int holidays;
     private int workingdays;
 }

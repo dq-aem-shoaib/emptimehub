@@ -15,7 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LeaveRequestDTO {
     private UUID leaveId;
-    private String approvalName;
     private EnumConstants.LeaveType type;
     private LocalDate fromDate;
     private LocalDate toDate;

@@ -28,6 +28,14 @@ public class LeaveSpecifications {
                 cb.equal(root.get("employee").get("employeeId"), employeeId);
     }
 
+
+    public static Specification<EmployeeLeave> byManager(UUID managerId) {
+        return (root, query, cb) -> cb.equal(
+                root.get("employee").get("reportingManager").get("employeeId"),
+                managerId
+        );
+    }
+
     /**
      * Filters leaves by a specific month.
      *

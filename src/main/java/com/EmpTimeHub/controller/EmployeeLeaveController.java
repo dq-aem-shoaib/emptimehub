@@ -1,9 +1,7 @@
 package com.EmpTimeHub.controller;
 
 import com.EmpTimeHub.constants.EnumConstants;
-import com.EmpTimeHub.dto.LeaveRequestDTO;
-import com.EmpTimeHub.dto.LeaveResponseDTO;
-import com.EmpTimeHub.dto.WebResponseDTO;
+import com.EmpTimeHub.dto.*;
 import com.EmpTimeHub.service.EmployeeLeaveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
@@ -78,7 +77,7 @@ public class EmployeeLeaveController {
      * @return ResponseEntity containing WebResponseDTO with paginated leave summaries.
      */
     @GetMapping(LEAVE_SUMMARY)
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE') OR hasRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<Page<LeaveResponseDTO>>> getLeaves(
             @RequestParam(required = false) UUID employeeId,
             @RequestParam(required = false) String month,
@@ -215,7 +214,7 @@ public class EmployeeLeaveController {
      * @return {@link WebResponseDTO} containing the updated leave details in a {@link LeaveResponseDTO}
      */
     @PutMapping(EMPLOYEE_LEAVE_STATUS_UPDATE)
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeaveStatus(
             @PathVariable UUID leaveId,
             @RequestParam EnumConstants.LeaveStatus status,
@@ -228,6 +227,55 @@ public class EmployeeLeaveController {
                 .status(200)
                 .message("Leave " + status.name().toLowerCase() + " successfully")
                 .response(response)
+                .build());
+    }
+
+    /**
+     * Calculate the number of working days for a given date range.
+     *
+     * @param request the date range request containing fromDate and toDate
+     * @return ResponseEntity containing a WebResponseDTO with the calculated working days
+     */
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PostMapping(EMPLOYEE_WORKDAYS)
+    public ResponseEntity<WebResponseDTO<WorkdayResponseDTO>> calculateWorkingDays(
+            @RequestBody DateRangeRequestDTO request) {
+
+        log.info("Received request to calculate working days from {} to {}",
+                request.getFromDate(), request.getToDate());
+
+        WorkdayResponseDTO response = leaveService.calculateWorkingDays(request);
+
+        log.info("Calculated working days: {}", response.getWorkingDays());
+
+        return ResponseEntity.ok(WebResponseDTO.<WorkdayResponseDTO>builder()
+                .flag(true)
+                .status(200)
+                .message("Working days calculated successfully")
+                .response(response)
+                .build());
+    }
+
+    /**
+     * Fetch all company holidays as a key-value map (date -> name).
+     *
+     * @return ResponseEntity containing a WebResponseDTO with all holidays
+     */
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE') OR hasRole('MANAGER')")
+    @GetMapping(COMPANY_HOLIDAYS)
+    public ResponseEntity<WebResponseDTO<Map<String, String>>> getAllHolidays() {
+
+        log.info("Fetching all company holidays");
+
+        Map<String, String> holidays = leaveService.getAllHolidaysMap();
+
+        log.info("Fetched {} holidays", holidays.size());
+
+        return ResponseEntity.ok(WebResponseDTO.<Map<String, String>>builder()
+                .flag(true)
+                .status(200)
+                .message("All holidays fetched successfully")
+                .response(holidays)
                 .build());
     }
 

@@ -29,7 +29,7 @@ public class EmployeeLeave {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approval_id")
-    private Admin approval;
+    private Employee reportingManager;
 
     @Column(name = "leave_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -52,7 +52,7 @@ public class EmployeeLeave {
     private EnumConstants.LeaveStatus status = EnumConstants.LeaveStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")
-    private String adminComment;
+    private String managerComment;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
