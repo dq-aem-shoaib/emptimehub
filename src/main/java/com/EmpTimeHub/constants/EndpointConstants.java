@@ -86,7 +86,7 @@ public class EndpointConstants {
     public static final String EMPLOYEE_UPDATE = EMPLOYEE_API + UPDATE ;
     public static final String VIEW_ALL_TIMESHEET = EMPLOYEE_API + VIEW + "/timesheet";
     public static final String EMPLOYEE_TIMESHEET_VIEW = EMPLOYEE_API + VIEW + "/timesheet/{timesheetId}";
-    public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/register";
+    public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/timesheet/register";
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";

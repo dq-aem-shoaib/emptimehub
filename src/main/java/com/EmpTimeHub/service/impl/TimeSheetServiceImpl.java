@@ -68,7 +68,6 @@ public class TimeSheetServiceImpl implements TimeSheetService {
 
         Client client = emp.getClient();
         Project project = projectRepository.findByEmployeeAndClient(emp, client);
-
         LocalDate currentDate = timeSheet.getWorkDate();
         LocalDate projectStart = project.getStartDate();
         LocalDate projectEnd = project.getEndDate();
@@ -254,6 +253,10 @@ public class TimeSheetServiceImpl implements TimeSheetService {
             LOG.error("Email mismatch for update: provided [{}], expected [{}]",
                     loggedInUserEmail, emp.getCompanyEmail());
             throw new UserNotFoundException("Please login with your company email address");
+        }
+
+        if(tsUpdated.getStatus().equals(EnumConstants.WorkRequest.APPROVED.name())){
+            throw new RuntimeException("You can not edit this");
         }
 
         LOG.debug("Applying field updates for timesheet: {}", timesheetId);

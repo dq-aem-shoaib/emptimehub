@@ -46,6 +46,15 @@ public class EnumConstants {
     public enum AddressTypeEnum { PERMANENT, COMMUNICATION, OFFICE, EMERGENCY }
 
 
+    public enum DayType {
+        WORKING_DAY,
+        WEEKEND,
+        HOLIDAY,
+        LEAVE,
+        LEAVE_AND_HOLIDAY,
+        LEAVE_AND_WEEKEND
+    }
+
     public enum EmploymentType {CONTRACTOR , FREELANCER , FULLTIME }
 
     @AllArgsConstructor
