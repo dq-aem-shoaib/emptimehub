@@ -43,6 +43,9 @@ public class EndpointConstants {
     public static final String ADMIN_DELETE_EMP = ADMIN_API+"/{empId}";
     public static final String ADMIN_DELETE_CLIENT = ADMIN_API+"/client/{clientId}";
     public static final String ADMIN_UNASSIGN_CLIENT = ADMIN_API+"/emp/{empId}";
+    public static final String ADD_CLIENT_ADDRESS = ADMIN_API+"/client/address/{clientId}";
+
+
 
 
 
@@ -79,6 +82,8 @@ public class EndpointConstants {
 
     // Employee
     public static final String EMPLOYEE_API = WEB_API_PREFIX + "/employee";
+    public static final String EMPLOYEE_VIEW = EMPLOYEE_API + VIEW ;
+    public static final String EMPLOYEE_UPDATE = EMPLOYEE_API + UPDATE ;
     public static final String VIEW_ALL_TIMESHEET = EMPLOYEE_API + VIEW + "/timesheet";
     public static final String EMPLOYEE_TIMESHEET_VIEW = EMPLOYEE_API + VIEW + "/timesheet/{timesheetId}";
     public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/register";
@@ -92,4 +97,8 @@ public class EndpointConstants {
     public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
+    public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
+    public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
+
+
 }
