@@ -1,5 +1,6 @@
 package com.EmpTimeHub.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -25,6 +26,7 @@ public class ClientPoc {
     private UUID pocId;
 
     /** Many POCs can belong to one client */
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "client_id",

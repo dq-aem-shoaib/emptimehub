@@ -12,4 +12,11 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class AdminModel implements Serializable {
 
+    // ---------- Basic Info ----------
+    private String firstName;
+    private String lastName;
+    private String personalEmail;   // Employee's personal email
+    private String companyEmail;    // Company-provided email
+    private String contactNumber;
+
 }

@@ -1,11 +1,13 @@
 package com.EmpTimeHub.entity;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,12 +51,15 @@ public class Employee {
     )
     private Client client;
 
+    @Column(name = "company_id",  length = 50)
+    private String companyId;
+
     /** Each employee has unique bank details */
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, optional = true, cascade = CascadeType.ALL)
     @JoinColumn(
             name = "bank_account_id",
-            nullable = false,
             unique = true,
+            nullable = true,
             foreignKey = @ForeignKey(name = "fk_employee_bank")
     )
     private BankDetails bankDetails;
@@ -82,8 +87,18 @@ public class Employee {
     @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
-    @Column(name = "currency", length = 10)
-    private String currency;
+
+    @Column(name = "alternate_contact_number", length = 20)
+    private String alternateContactNumber;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "marital_status", length = 20)
+    private String maritalStatus;
+
+    @Column(name = "number_of_children")
+    private Integer numberOfChildren = 0;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
@@ -91,8 +106,13 @@ public class Employee {
     @Column(name = "date_of_joining")
     private LocalDate dateOfJoining;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "designation", length = 100)
-    private String designation;
+    private EnumConstants.Designation designation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name= "employment_type" , length = 50)
+    private EnumConstants.EmploymentType employmentType;
 
     @Column(name = "rate_card", precision = 10, scale = 2)
     private BigDecimal rateCard = BigDecimal.ZERO;
@@ -101,12 +121,15 @@ public class Employee {
     private String panNumber;
 
     @Column(name = "available_leaves", precision = 5)
-    private Integer availableLeaves;
+    private Double availableLeaves;
 
     @Column(name = "aadhar_number", length = 20)
     private String aadharNumber;
 
     // File URLs for documents
+    @Column(name = "employee_photo_url", length = 255)
+    private String employeePhotoUrl;
+
     @Column(name = "pan_card_url", length = 255)
     private String panCardUrl;
 
