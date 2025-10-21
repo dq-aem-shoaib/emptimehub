@@ -15,4 +15,5 @@ public interface MailService {
      * @param name    Name of the sender (used in the email body or signature).
      */
     void sendMail(String from, String to, String subject, String body, String name);
+    void sendMail(String to, String body);
 }

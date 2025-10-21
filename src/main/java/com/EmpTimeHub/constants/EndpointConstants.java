@@ -77,11 +77,14 @@ public class EndpointConstants {
     public static final String IMAGE_UPLOAD_URL = SUPER_ADMIN_API + "/uploadimage";
     public static final String SUPER_ADMIN_UPDATE = SUPER_ADMIN_API + "/update/superadmin";
 
-    // Employee
+    // Employee and its Timesheets
     public static final String EMPLOYEE_API = WEB_API_PREFIX + "/employee";
     public static final String VIEW_ALL_TIMESHEET = EMPLOYEE_API + VIEW + "/timesheet";
     public static final String EMPLOYEE_TIMESHEET_VIEW = EMPLOYEE_API + VIEW + "/timesheet/{timesheetId}";
-    public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/register";
+    public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/timesheet/register";
+    public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
+    public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
+    public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/final/submit";
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
@@ -90,6 +93,5 @@ public class EndpointConstants {
 //common api for admin and employee
     public static final String COMMON_API = WEB_API_PREFIX + "/common";
     public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
-    public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
-    public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
+
 }
