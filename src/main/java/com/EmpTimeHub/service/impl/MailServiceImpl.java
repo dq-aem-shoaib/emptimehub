@@ -1,6 +1,7 @@
 package com.EmpTimeHub.service.impl;
 
 import com.EmpTimeHub.service.MailService;
+import jakarta.mail.Multipart;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.MessagingException;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Implementation of MailService for sending emails using JavaMailSender.
@@ -35,22 +37,27 @@ public class MailServiceImpl implements MailService {
      * @param to      Recipient's email address.
      * @param subject Subject of the email.
      * @param body    Body content of the email.
-     * @param name    Name of the sender (used in the email body or signature).
      */
     @Override
-    public void sendMail(String from, String to, String subject, String body, String name) {
+    public void sendMail(String from, String to, String subject, String body, MultipartFile attachment) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-            helper.setFrom(new InternetAddress(from, name));
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, false);
+            if (attachment != null && !attachment.isEmpty()) {
+                helper.addAttachment(attachment.getOriginalFilename(), attachment);
+                log.info("Attached file '{}' to email.", attachment.getOriginalFilename());
+            }
 
             mailSender.send(message);
+
             log.info("Email sent successfully from '{}' to '{}', subject='{}'", from, to, subject);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+        } catch (MessagingException e) {
             log.error("Failed to send email from '{}' to '{}', subject='{}': {}", from, to, subject, e.getMessage(), e);
         }
     }
+
 }

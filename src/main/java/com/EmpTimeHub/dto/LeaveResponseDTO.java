@@ -19,11 +19,12 @@ public class LeaveResponseDTO {
     private String employeeName;
     private LocalDate fromDate;
     private LocalDate toDate;
-    private String type;
+    private String financialType;
+    private String leaveCategoryType;
     private String subject;
     private String context;
     private String status;
-    private String adminComment;
+    private String managerComment;
     private int holidays;
-    private int workingdays;
+    private Double leaveDuration;
 }
