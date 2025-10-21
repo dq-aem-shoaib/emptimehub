@@ -9,7 +9,7 @@ VALUES
  '$2a$12$t1Gb08wuTExFudX1GmOz3OBnlXliq8F.U.xIcqiFY/k41jjxD6P2O', 'ADMIN'),
 ('22222222-2222-2222-2222-222222222222', 'ClientUser', 'client@company.com',
  '$2a$12$t1Gb08wuTExFudX1GmOz3OBnlXliq8F.U.xIcqiFY/k41jjxD6P2O', 'CLIENT'),
-('33333333-3333-3333-3333-333333333333', 'EmployeeUser', 'employee@company.com',
+('33333333-3333-3333-3333-333333333333', 'EmployeeUser', 'ravi@techcorp.com',
  '$2a$12$t1Gb08wuTExFudX1GmOz3OBnlXliq8F.U.xIcqiFY/k41jjxD6P2O', 'EMPLOYEE'),
  ('77333333-3333-3333-3333-333333333333', 'Emp1', 'employee1@company.com',
   '$2a$12$t1Gb08wuTExFudX1GmOz3OBnlXliq8F.U.xIcqiFY/k41jjxD6P2O', 'EMPLOYEE');
@@ -125,5 +125,4 @@ VALUES
 -- ----------------------------
 INSERT INTO projects (project_id, client_id, employee_id, project_name, start_date, end_date)
 VALUES
-('123e4567-e89b-12d3-a126-126614000001','aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa','99999999-9999-9999-9999-999999999999','ICICI Bank Project','2022-11-12','2023-03-16'),
-('123e4567-e89b-12d3-a126-126614000007','aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa','99999999-9999-9999-9999-999999999999','RBI Bank Project','2023-07-23','2023-12-11');
+('123e4567-e89b-12d3-a126-126614000007','aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa','99999999-9999-9999-9999-999999999999','RBI Bank Project','2023-07-23','2025-12-11');

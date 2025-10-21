@@ -90,6 +90,8 @@ public class EndpointConstants {
 
     public static final String EMPLOYEE_WORKDAYS = EMPLOYEE_API + "/workDays";
     //common api for admin and employee
+    public static final String EMPLOYEE_VIEW = EMPLOYEE_API + VIEW ;
+    public static final String EMPLOYEE_UPDATE = EMPLOYEE_API + UPDATE ;
     public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
 
