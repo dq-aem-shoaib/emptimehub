@@ -30,7 +30,7 @@ public class EnumConstants {
     }
 
     public enum WorkRequest{
-        SUBMITED,APPROVED,PENDING,REJECTED;
+        SUBMITTED,APPROVED,PENDING,REJECTED;
     }
 
     public enum HolidayType {

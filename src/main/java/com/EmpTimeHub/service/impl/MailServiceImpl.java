@@ -1,7 +1,6 @@
 package com.EmpTimeHub.service.impl;
 
 import com.EmpTimeHub.service.MailService;
-import jakarta.mail.Multipart;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.MessagingException;
@@ -37,6 +36,7 @@ public class MailServiceImpl implements MailService {
      * @param to      Recipient's email address.
      * @param subject Subject of the email.
      * @param body    Body content of the email.
+     * @param name    Name of the sender (used in the email body or signature).
      */
     @Override
     public void sendMail(String from, String to, String subject, String body, MultipartFile attachment) {
@@ -60,4 +60,19 @@ public class MailServiceImpl implements MailService {
         }
     }
 
+    @Override
+    public void sendMail(String to, String body) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setText(body, true);
+
+            mailSender.send(message);
+            log.info("Email sent successfully to '{}', subject='{}'", to, body);
+        } catch (MessagingException e) {
+            log.error("Failed to send email to '{}': {}", to, e.getMessage(), e);
+        }
+    }
 }
