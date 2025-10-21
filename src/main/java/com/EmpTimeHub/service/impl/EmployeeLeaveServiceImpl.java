@@ -181,7 +181,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      *
      * @param employeeId Optional UUID of an employee to filter by.
      * @param month      Optional month filter in "yyyy-MM" format.
-     * @param type       Optional leave type filter (PAID, UNPAID, etc.).
+     * @param financialType       Optional leave type filter (PAID, UNPAID, etc.).
      * @param status     Optional leave status filter (PENDING, APPROVED, REJECTED, etc.).
      * @param page       Page number for pagination (0-based).
      * @param size       Page size for pagination.
@@ -596,7 +596,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
 
         System.out.println(employee.getDesignation());
-        int availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
+        Double availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
         Double workingDays = leave.getLeaveDuration() != null ? Double.valueOf(leave.getLeaveDuration()) : 0.0;
 
         // Validate working days
@@ -611,7 +611,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             }
 
 
-            Integer result = (int) (availableLeaves - workingDays);
+            Double result = (availableLeaves - workingDays);
             employee.setAvailableLeaves(result);
 
             // Persist updated employee safely
@@ -852,7 +852,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         }
 
         Employee employee = employeeOpt.get();
-        int availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
+        Double availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
         log.debug("Employee {} has {} available CASUAL leaves", employeeId, availableLeaves);
 
         boolean sufficient = availableLeaves >= leaveDuration;

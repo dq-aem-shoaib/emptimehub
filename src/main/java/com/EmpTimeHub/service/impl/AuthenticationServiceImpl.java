@@ -72,7 +72,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             employeeRepository.findByUser_UserId(user.getUserId()).ifPresentOrElse(employee -> {
 
                 BeanUtils.copyProperties(employee , employeeLoginResponseDTO);
-                employeeLoginResponseDTO.setClientId(employee.getClient().getClientId());
+                if(employee.getClient()!=null) {
+                    employeeLoginResponseDTO.setClientId(employee.getClient().getClientId());
+                }
                 employeeLoginResponseDTO.setResponseMessage("Employee login successful!");
                 employeeLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
             }, () -> employeeLoginResponseDTO.setResponseMessage("Employee details not found for this user."));

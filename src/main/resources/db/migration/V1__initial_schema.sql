@@ -2,37 +2,6 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- -----------------------------
--- ENUM TYPES
--- -----------------------------
-CREATE TYPE designation_enum AS ENUM (
-    'INTERN',
-    'TRAINEE',
-    'ASSOCIATE_ENGINEER',
-    'SOFTWARE_ENGINEER',
-    'SENIOR_SOFTWARE_ENGINEER',
-    'LEAD_ENGINEER',
-    'TEAM_LEAD',
-    'TECHNICAL_ARCHITECT',
-    'PROJECT_MANAGER',
-    'DELIVERY_MANAGER',
-    'DIRECTOR',
-    'VP_ENGINEERING',
-    'CTO',
-    'HR',
-    'FINANCE',
-    'OPERATIONS'
-);
-
-CREATE TYPE gender_enum AS ENUM ('MALE', 'FEMALE', 'OTHER');
-
-CREATE TYPE marital_status_enum AS ENUM ('SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED');
-
-CREATE TYPE address_type_enum AS ENUM ('PERMANENT', 'COMMUNICATION', 'OFFICE', 'EMERGENCY');
-
-CREATE TYPE status_enum AS ENUM ('ACTIVE', 'INACTIVE');
-
-
--- -----------------------------
 -- Table: users
 -- -----------------------------
 CREATE TABLE users (
@@ -40,7 +9,7 @@ CREATE TABLE users (
     user_name VARCHAR(255) NOT NULL,
     company_email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN','EMPLOYEE','CLIENT')),
+    role VARCHAR(20) NOT NULL, -- was ENUM, now VARCHAR
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -73,7 +42,7 @@ CREATE TABLE client (
     currency VARCHAR(10),
     tan_number VARCHAR(20),
     pan_number VARCHAR(20),
-    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
+    status VARCHAR(20) DEFAULT 'ACTIVE', -- was ENUM, now VARCHAR
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -88,10 +57,11 @@ CREATE TABLE client_poc (
     email VARCHAR(100) NOT NULL,
     contact_number VARCHAR(20),
     designation VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','INACTIVE')),
+    status VARCHAR(20) DEFAULT 'ACTIVE', -- was ENUM, now VARCHAR
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 -- -----------------------------
 -- Table: bank_details
 -- -----------------------------
@@ -106,8 +76,6 @@ CREATE TABLE bank_details (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
 -- -----------------------------
 -- EMPLOYEE TABLE
 -- -----------------------------
@@ -115,7 +83,6 @@ CREATE TABLE employee (
     employee_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     client_id UUID NULL REFERENCES client(client_id) ON DELETE SET NULL,
-
     -- Basic Info
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -125,7 +92,8 @@ CREATE TABLE employee (
     alternate_contact_number VARCHAR(20),
 
     -- Employment Info
-    designation designation_enum,
+    designation VARCHAR(50), -- was ENUM
+    employment_type VARCHAR(50) CHECK (employment_type IN ('CONTRACTOR','FREELANCER','FULLTIME')),
     reporting_manager_id UUID NULL REFERENCES employee(employee_id) ON DELETE SET NULL,
     date_of_birth DATE,
     date_of_joining DATE,
@@ -133,11 +101,11 @@ CREATE TABLE employee (
     pan_number VARCHAR(20),
     available_leaves NUMERIC(5),
     aadhar_number VARCHAR(20),
-    bank_account_id UUID NOT NULL REFERENCES bank_details(bank_account_id) ON DELETE CASCADE,
+    bank_account_id UUID NULL REFERENCES bank_details(bank_account_id),
 
     -- Personal Info
-    gender gender_enum,
-    marital_status marital_status_enum,
+    gender VARCHAR(10), -- was ENUM
+    marital_status VARCHAR(20), -- was ENUM
     number_of_children INT DEFAULT 0 CHECK (number_of_children >= 0),
     employee_photo_url VARCHAR(255),
 
@@ -151,7 +119,7 @@ CREATE TABLE employee (
     post_graduation_cft_url VARCHAR(255),
 
     -- Status
-    status status_enum DEFAULT 'ACTIVE',
+    status VARCHAR(20) DEFAULT 'ACTIVE', -- was ENUM
 
     -- Tracking
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -162,22 +130,21 @@ CREATE TABLE employee (
 -- EMPLOYEE_ADDRESS LINKING TABLE
 -- -----------------------------
 CREATE TABLE employee_address (
+    employee_address_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
     address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
-    address_type address_type_enum NOT NULL,
-    PRIMARY KEY (employee_id, address_id)
+    address_type VARCHAR(20) NOT NULL-- was ENUM
 );
 
 -- -----------------------------
 -- CLIENT_ADDRESS LINKING TABLE
 -- -----------------------------
 CREATE TABLE client_address (
+    client_address_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
     address_id UUID NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
-    address_type address_type_enum NOT NULL,
-    PRIMARY KEY (client_id, address_id)
+    address_type VARCHAR(20) NOT NULL-- was ENUM
 );
-
 
 -- -----------------------------
 -- Table: timesheet
@@ -190,7 +157,7 @@ CREATE TABLE timesheets (
     hours_worked DECIMAL(5,2) NOT NULL,
     task_name TEXT,
     task_description TEXT,
-    status VARCHAR(20) DEFAULT 'SUBMITTED' CHECK (status IN ('SUBMITTED','APPROVED','REJECTED','PENDING')),
+    status VARCHAR(20) DEFAULT 'SUBMITTED', -- was ENUM
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -206,7 +173,7 @@ CREATE TABLE salary (
     gross_salary DECIMAL(10,2) DEFAULT 0,
     deductions DECIMAL(10,2) DEFAULT 0,
     net_salary DECIMAL(10,2) DEFAULT 0,
-    payment_status VARCHAR(20) DEFAULT 'UNPAID' CHECK (payment_status IN ('PAID','UNPAID')),
+    payment_status VARCHAR(20) DEFAULT 'UNPAID', -- was ENUM
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -219,7 +186,7 @@ CREATE TABLE invoice (
     invoice_month DATE NOT NULL,
     total_hours DECIMAL(10,2) DEFAULT 0,
     total_amount DECIMAL(12,2) DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING','PAID')),
+    status VARCHAR(20) DEFAULT 'PENDING', -- was ENUM
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -279,11 +246,10 @@ CREATE TABLE admin (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 -- -----------------------------
 -- Table: employee_leave
 -- -----------------------------
-
-
 CREATE TABLE employee_leave (
     leave_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id UUID NOT NULL REFERENCES employee(employee_id) ON DELETE CASCADE,
@@ -301,6 +267,12 @@ CREATE TABLE employee_leave (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ----------------------------
+-- Holidays
+-- ----------------------------
+-- -----------------------------
+-- Table: holidays
+-- -----------------------------
 CREATE TABLE holidays (
     holiday_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     holiday_date DATE NOT NULL,
@@ -311,6 +283,9 @@ CREATE TABLE holidays (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- ----------------------------
+-- Projects
+-- ----------------------------
 CREATE TABLE projects (
     project_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
@@ -318,4 +293,4 @@ CREATE TABLE projects (
     project_name VARCHAR(200) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL
-)
+);

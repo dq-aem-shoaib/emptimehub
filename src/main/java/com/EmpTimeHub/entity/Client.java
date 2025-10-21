@@ -1,5 +1,6 @@
 package com.EmpTimeHub.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,12 +31,6 @@ public class Client {
     @JoinColumn(name = "user_id", nullable = false, unique = true,
             foreignKey = @ForeignKey(name = "fk_client_user"))
     private User user;
-
-    /** Each client has one unique address */
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", nullable = false, unique = true,
-            foreignKey = @ForeignKey(name = "fk_client_address"))
-    private Address address;
 
     @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
@@ -69,7 +64,7 @@ public class Client {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    /** ✅ One Client can have many POCs (People of Contact) */
+    @JsonManagedReference
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ClientPoc> pocs;
 }

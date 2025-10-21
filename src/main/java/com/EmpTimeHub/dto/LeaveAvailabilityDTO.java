@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LeaveAvailabilityDTO {
     private boolean isAvailable;
-    private int availableLeaves;
+    private Double availableLeaves;
     private double requestedLeave;
     private String message;
 }

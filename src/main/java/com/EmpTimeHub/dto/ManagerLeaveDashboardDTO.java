@@ -20,6 +20,6 @@ public class ManagerLeaveDashboardDTO {
     private Double leaveDuration;
     private String reason;
     private String attachmentUrl;
-    private Integer remainingLeaves;
+    private Double remainingLeaves;
     private String status;
 }

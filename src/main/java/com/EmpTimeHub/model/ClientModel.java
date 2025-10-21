@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,11 +20,10 @@ public class ClientModel {
     private String gst;
     private String currency;
     private String panNumber;
+    private String tanNumber;
     // ---------- Address Info ----------
-    private String houseNo;
-    private String streetName;
-    private String city;
-    private String state;
-    private String pinCode;
-    private String country;
+
+    private List<AddressModel> addresses;
+
+    private List<ClientPocModel> clientPocs;
 }

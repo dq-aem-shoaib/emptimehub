@@ -1,11 +1,13 @@
 package com.EmpTimeHub.repository;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,5 +19,9 @@ public interface EmployeeRepository extends JpaRepository<Employee,UUID> {
 
     @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.reportingManager WHERE e.employeeId = :id")
     Optional<Employee> findByIdWithManager(@Param("id") UUID id);
+
+    List<Employee> findByDesignation(EnumConstants.Designation designation);
+    Optional<Employee> findFirstByOrderByCreatedAtDesc();
+
 
 }
