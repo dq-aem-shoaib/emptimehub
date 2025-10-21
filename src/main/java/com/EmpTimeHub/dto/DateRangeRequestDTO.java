@@ -9,4 +9,5 @@ import java.time.LocalDate;
 public class DateRangeRequestDTO {
     private LocalDate fromDate;
     private LocalDate toDate;
+    private  Boolean partialDay;
 }

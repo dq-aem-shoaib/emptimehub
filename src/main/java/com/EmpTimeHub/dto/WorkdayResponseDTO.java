@@ -11,5 +11,5 @@ public class WorkdayResponseDTO {
     private int holidays;
     private int weekends;
     private int totalHolidays;
-    private int workingDays;
+    private Double leaveDuration;
 }

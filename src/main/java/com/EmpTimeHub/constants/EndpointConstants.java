@@ -85,12 +85,13 @@ public class EndpointConstants {
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
-    public static final String  EMPLOYEE_LEAVE_DELETE=EMPLOYEE_API+"/leave"+"/delete"+DELETE;
+    public static final String  EMPLOYEE_LEAVE_WITHDRAW=EMPLOYEE_API+"/leave"+"/withdrawn";
     public static final String  EMPLOYEE_LEAVE_STATUS_UPDATE=EMPLOYEE_API+"/leave"+"/updateStatus"+"/{leaveId}";
 
-//common api for admin and employee
-    public static final String COMMON_API = WEB_API_PREFIX + "/common";
-    public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
+    public static final String  EMPLOYEE_LEAVE_AVAILABILTY=EMPLOYEE_API+"/leave"+"/checkLeaveAvailability";
+    public static final String  EMPLOYEE_PENDING_LEAVES=EMPLOYEE_API+"/leave"+"/pendingLeaves";
+    //common api for admin and employee
+    public static final String LEAVE_SUMMARY = EMPLOYEE_API + "/leave-summary";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
     public static final String EMPLOYEE_WORKDAYS = EMPLOYEE_API + "/workDays";

@@ -1,10 +1,7 @@
 package com.EmpTimeHub.service.impl;
 
 import com.EmpTimeHub.constants.EnumConstants;
-import com.EmpTimeHub.dto.DateRangeRequestDTO;
-import com.EmpTimeHub.dto.LeaveRequestDTO;
-import com.EmpTimeHub.dto.LeaveResponseDTO;
-import com.EmpTimeHub.dto.WorkdayResponseDTO;
+import com.EmpTimeHub.dto.*;
 import com.EmpTimeHub.entity.*;
 import com.EmpTimeHub.exceptions.customExceptions.UserNotFoundException;
 import com.EmpTimeHub.repository.*;
@@ -23,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -44,6 +42,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     private final MailService mailService;
     private final HolidayRepository holidayRepository;
 
+
     /**
      * Applies for leave on behalf of the authenticated employee.
      * <p>
@@ -59,14 +58,13 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     @Override
     public LeaveResponseDTO applyLeave(LeaveRequestDTO request, String email) {
         log.info("Applying leave for user with email '{}', from {} to {}, type: {}",
-                email, request.getFromDate(), request.getToDate(), request.getType());
+                email, request.getFromDate(), request.getToDate(), request.getCategoryType());
 
         User user = userRepository.findByCompanyEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         Employee employee = employeeRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("Employee not found"));
 
-        String employeeMail = employee.getCompanyEmail();
         log.debug("Employee found: {} {}", employee.getFirstName(), employee.getLastName());
 
         Employee manager = employeeRepository.findByIdWithManager(employee.getEmployeeId())
@@ -81,16 +79,35 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         LocalDate fromDate = request.getFromDate();
         LocalDate endDate = request.getToDate();
 
-        DateRangeRequestDTO rangeRequestDTO=new DateRangeRequestDTO(fromDate,endDate);
+        // 3. Calculate working days
+        DateRangeRequestDTO rangeRequestDTO = new DateRangeRequestDTO(fromDate, endDate,request.getPartialDay());
         WorkdayResponseDTO workdayResponseDTO = calculateWorkingDays(rangeRequestDTO);
+        int totalHolidays = workdayResponseDTO.getTotalHolidays();
 
-        int workingDays = workdayResponseDTO.getWorkingDays();
-        int totalHolidays=workdayResponseDTO.getTotalHolidays();
+        // 4. Determine leave duration
+        Double leaveDuration = request.getLeaveDuration();
+        Boolean partialDay = Boolean.TRUE.equals(request.getPartialDay());
 
-        // Build and save leave entity
+//        // 5. Determine financial type based on available leaves
+//        Double availableLeaves = Double.valueOf(employee.getAvailableLeaves()); // fetch current available leave
+//        EnumConstants.FinancialType financialType;
+//        if (availableLeaves >= leaveDuration) {
+//            financialType = EnumConstants.FinancialType.PAID; // or CASUAL if applicable
+//        } else {
+//            financialType = EnumConstants.FinancialType.UNPAID;
+//        }
+
+        // 6. Optional attachment URL
+        String attachmentUrl = (request.getAttachmentFile() != null && !request.getAttachmentFile().isEmpty())
+                ? null
+                : null;
+
+        // 7. Save leave request
         EmployeeLeave leave = EmployeeLeave.builder()
                 .employee(employee)
-                .type(request.getType())
+                .reportingManager(manager)
+                .leaveCategory(request.getCategoryType())
+                .financialType(request.getFinancialType())
                 .fromDate(fromDate)
                 .toDate(endDate)
                 .subject(request.getSubject())
@@ -98,48 +115,53 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .status(EnumConstants.LeaveStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .attachmentUrl(attachmentUrl)
+                .partialDay(partialDay)
                 .holidays(totalHolidays)
-                .workingDays(workingDays)
+                .leaveDuration(leaveDuration)
                 .build();
 
         EmployeeLeave savedLeave = leaveRepository.save(leave);
         log.info("Leave saved successfully with leaveId={}", savedLeave.getLeaveId());
 
-        // Send email to manager if available
-        if (manager != null ) {
+        // 9. Send email to manager
+        if (manager != null) {
             String managerCompanyMail = manager.getCompanyEmail();
             String managerName = manager.getFirstName();
             String mailSubject = request.getSubject();
             String mailBody = String.format("""
-        Dear %s,
-        
-        I would like to request leave for the following period:
-        
-        Leave Period: %s to %s
-        Type: %s
-        Working Days: %d
-        Holidays: %d
-        Reason/Context: %s
+            Dear %s,
+            
+            I would like to request leave for the following period:
+            
+            Leave Period: %s to %s
+            LeaveCategoryType: %s
+            FinancialType:%s
+            LeaveDuration Days: %.1f
+            Holidays: %d
+            Reason/Context: %s
 
-        Kindly review and approve/reject my leave request.
+            Kindly review and approve/reject my leave request.
 
-        Regards,
-        %s
-        """,
+            Regards,
+            %s
+            """,
                     managerName,
-                    request.getFromDate(),
-                    request.getToDate(),
-                    request.getType(),
-                    workingDays,
+                    fromDate,
+                    endDate,
+                    request.getCategoryType(),
+                    request.getFinancialType(),
+                    leaveDuration,
                     totalHolidays,
                     request.getContext(),
                     employee.getFirstName()
             );
 
-            mailService.sendMail(employeeMail, managerCompanyMail, mailSubject, mailBody);
-            log.info("Leave approval email sent from '{}' to '{}'", employeeMail, managerCompanyMail);
+            mailService.sendMail(employee.getCompanyEmail(), managerCompanyMail, mailSubject, mailBody, request.getAttachmentFile());
+            log.info("Leave approval email sent from '{}' to '{}'", employee.getCompanyEmail(), managerCompanyMail);
         }
 
+        // 10. Return response
         return mapToResponse(savedLeave);
     }
 
@@ -170,12 +192,13 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      * @throws AccessDeniedException   if an employee/manager tries to access unauthorized leave records.
      */
     @Override
-    public Page<LeaveResponseDTO> getLeaves(UUID employeeId, String month, String type, String status,
-                                            int page, int size, String sort, UserDetails user) {
+    public Page<LeaveResponseDTO> getLeaves(UUID employeeId, String month, String financialType,String leaveCategory, String status,
+                                            int page, int size, String sort, UserDetails user,Boolean futureApproved,         // NEW PARAM
+                                            LocalDate date) {
 
         log.info("===== Fetching leave summary =====");
-        log.info("Requested by user: '{}', Filters -> employeeId: {}, month: {}, type: {}, status: {}, page: {}, size: {}, sort: {}",
-                user.getUsername(), employeeId, month, type, status, page, size, sort);
+        log.info("Requested by user: '{}', Filters -> employeeId: {}, month: {}, finacialType: {},  categoryType: {}, status: {}, page: {}, size: {}, sort: {}",
+                user.getUsername(), employeeId, month, financialType,leaveCategory, status, page, size, sort);
 
         // Fetch current user from database
         User currentUser = userRepository.findByCompanyEmail(user.getUsername())
@@ -244,10 +267,14 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             log.debug("Applied month filter: {}", month);
         }
 
-        if (type != null && !type.isBlank()) {
-            spec = (spec == null) ? LeaveSpecifications.byType(type)
-                    : spec.and(LeaveSpecifications.byType(type));
-            log.debug("Applied leave type filter: {}", type);
+        if (financialType != null && !financialType.isBlank()) {
+            spec = (spec == null) ? LeaveSpecifications.byFinancialType(financialType)
+                    : spec.and(LeaveSpecifications.byFinancialType(financialType));
+        }
+
+        if (leaveCategory != null && !leaveCategory.isBlank()) {
+            spec = (spec == null) ? LeaveSpecifications.byLeaveCategory(leaveCategory)
+                    : spec.and(LeaveSpecifications.byLeaveCategory(leaveCategory));
         }
 
         if (status != null && !status.isBlank()) {
@@ -255,6 +282,25 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                     : spec.and(LeaveSpecifications.byStatus(status));
             log.debug("Applied leave status filter: {}", status);
         }
+
+        // ===========================
+        // Apply future approved leaves filter
+        // ===========================
+        if (Boolean.TRUE.equals(futureApproved)) {
+            Specification<EmployeeLeave> futureSpec = LeaveSpecifications.futureApprovedLeaves();
+            spec = (spec == null) ? futureSpec : spec.and(futureSpec);
+            log.debug("Applied future approved leaves filter");
+        }
+
+        // ===========================
+        // Apply date-based on-leave check
+        // ===========================
+        if (date != null) {
+            Specification<EmployeeLeave> onDateSpec = LeaveSpecifications.leavesOnDate(date);
+            spec = (spec == null) ? onDateSpec : spec.and(onDateSpec);
+            log.debug("Applied on-leave check filter for date {}", date);
+        }
+
 
         // ===========================
         // Sorting
@@ -357,14 +403,22 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         }
 
         // Only pending leaves can be updated
-        if (existingLeave.getStatus() != EnumConstants.LeaveStatus.PENDING) {
-            log.warn("LeaveId={} update rejected — current status={}", leaveId, existingLeave.getStatus());
-            throw new IllegalStateException("Only pending leaves can be updated");
+        if (existingLeave.getStatus() != EnumConstants.LeaveStatus.PENDING
+                || Boolean.TRUE.equals(existingLeave.getWithdrawn())) {
+            log.warn("LeaveId={} update rejected — current status={}, withdrawn={}",
+                    leaveId, existingLeave.getStatus(), existingLeave.getWithdrawn());
+            throw new IllegalArgumentException(
+                    "Leave cannot be updated: only pending and not withdrawn leaves are allowed"
+            );
         }
 
+
         // Apply non-null updates
-        if (request.getType() != null) {
-            existingLeave.setType(request.getType());
+        if (request.getCategoryType() != null) {
+            existingLeave.setLeaveCategory(request.getCategoryType());
+        }
+        if (request.getFinancialType() != null) {
+            existingLeave.setFinancialType(request.getFinancialType());
         }
         if (request.getSubject() != null && !request.getSubject().isBlank()) {
             existingLeave.setSubject(request.getSubject());
@@ -373,22 +427,35 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             existingLeave.setContext(request.getContext());
         }
 
+        if (request.getPartialDay() != null) {
+            existingLeave.setPartialDay(request.getPartialDay());
+        }
+
+        if (request.getLeaveDuration() != null) {
+            existingLeave.setLeaveDuration(request.getLeaveDuration());
+        }
+
+        if (request.getAttachmentFile() != null && !request.getAttachmentFile().isEmpty()) {
+            existingLeave.setAttachmentUrl(null);
+        }
+
         // Recalculate date-related fields if dates changed
         LocalDate fromDate = request.getFromDate() != null ? request.getFromDate() : existingLeave.getFromDate();
         LocalDate toDate = request.getToDate() != null ? request.getToDate() : existingLeave.getToDate();
 
+
         if (!fromDate.equals(existingLeave.getFromDate()) || !toDate.equals(existingLeave.getToDate())) {
-            DateRangeRequestDTO rangeRequestDTO = new DateRangeRequestDTO(fromDate, toDate);
+            DateRangeRequestDTO rangeRequestDTO = new DateRangeRequestDTO(fromDate, toDate,request.getPartialDay());
             WorkdayResponseDTO workdayResponseDTO = calculateWorkingDays(rangeRequestDTO);
 
-            int workingDays = workdayResponseDTO.getWorkingDays();
+           Double leaveDuration= request.getLeaveDuration();
             int totalHolidays = workdayResponseDTO.getTotalHolidays();
             existingLeave.setFromDate(fromDate);
             existingLeave.setToDate(toDate);
-            existingLeave.setWorkingDays(workingDays);
+            existingLeave.setLeaveDuration(leaveDuration);
             existingLeave.setHolidays(totalHolidays);
 
-            log.info("Recalculated leave period for leaveId={}: workingDays={}, holidays={}", leaveId, workingDays, totalHolidays);
+            log.info("Recalculated leave period for leaveId={}: workingDays={}, holidays={}", leaveId, leaveDuration, totalHolidays);
         }
 
         // Send email to manager if available
@@ -402,6 +469,10 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .orElseThrow(() -> new UserNotFoundException("Employee not found with ID: " + employee.getEmployeeId()));
 
 
+        // Update timestamp and save
+        existingLeave.setUpdatedAt(LocalDateTime.now());
+        EmployeeLeave updatedLeave = leaveRepository.save(existingLeave);
+
         if (manager != null) {
             String managerCompanyMail = manager.getCompanyEmail();
             String managerName = manager.getFirstName();
@@ -413,8 +484,9 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             The following leave request has been updated by %s:
             
             Leave Period: %s to %s
-            Type: %s
-            Working Days: %d
+            LeaveCategoryType: %s
+            FinancialType:%s
+            LeaveDuration Days: %.1f
             Holidays: %d
             Reason/Context: %s
             
@@ -427,20 +499,18 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                     employee.getFirstName(),
                     existingLeave.getFromDate(),
                     existingLeave.getToDate(),
-                    existingLeave.getType(),
-                    existingLeave.getWorkingDays(),
+                    existingLeave.getLeaveCategory(),
+                    existingLeave.getFinancialType(),
+                    existingLeave.getLeaveDuration(),
                     existingLeave.getHolidays(),
                     existingLeave.getContext(),
                     employee.getFirstName()
             );
 
-            mailService.sendMail(employeeMail, managerCompanyMail, mailSubject, mailBody);
+            mailService.sendMail(employeeMail, managerCompanyMail, mailSubject, mailBody,request.getAttachmentFile());
             log.info("Leave update email sent from '{}' to '{}'", employeeMail, managerCompanyMail);
         }
 
-        // Update timestamp and save
-        existingLeave.setUpdatedAt(LocalDateTime.now());
-        EmployeeLeave updatedLeave = leaveRepository.save(existingLeave);
         log.info("Leave updated successfully for leaveId={}", leaveId);
 
         return mapToResponse(updatedLeave);
@@ -449,41 +519,50 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
 
     /**
-     * Deletes a leave request for the authenticated employee by its ID.
-     * <p>
-     * Only leaves with PENDING status can be deleted. Employees can only delete their own leaves.
-     *
-     * @param leaveId UUID of the leave to delete.
-     * @param email   Email of the authenticated employee.
-     * @throws EntityNotFoundException if the user, employee, or leave is not found.
-     * @throws AccessDeniedException   if the leave does not belong to the employee.
-     * @throws IllegalStateException   if the leave is not in PENDING status.
+     * Withdraws a leave request if it's pending or starts today/future.
+     * Only the leave owner can perform this action.
+     * Updates status to WITHDRAWN instead of deleting the record.
+     * Throws exception if leave is approved, started, or not found.
      */
     @Override
-    public void deleteLeave(UUID leaveId, String email) {
-        log.info("Attempting to delete leave with leaveId={} for user '{}'", leaveId, email);
+    public void withdrawLeave(UUID leaveId, String email) {
+        log.info("Attempting to withdraw leave with leaveId={} for user '{}'", leaveId, email);
 
+        // 1️⃣ Fetch user and employee
         User user = userRepository.findByCompanyEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Employee employee = employeeRepository.findByUser_UserId(user.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
+        // 2️⃣ Fetch leave
         EmployeeLeave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found with ID: " + leaveId));
 
+        // 3️⃣ Check ownership
         if (!leave.getEmployee().getEmployeeId().equals(employee.getEmployeeId())) {
-            log.warn("User '{}' attempted to delete leaveId={} which does not belong to them", email, leaveId);
-            throw new AccessDeniedException("You are not authorized to delete this leave");
+            throw new AccessDeniedException("You are not authorized to withdraw this leave");
         }
 
-        if (leave.getStatus() != EnumConstants.LeaveStatus.PENDING) {
-            log.warn("LeaveId={} cannot be deleted because its status is {}", leaveId, leave.getStatus());
-            throw new IllegalStateException("Only pending leaves can be deleted");
+        LocalDate today = LocalDate.now();
+
+        // 4️⃣ Only allow withdrawal if leave is PENDING OR future-dated
+        boolean isPending = leave.getStatus() == EnumConstants.LeaveStatus.PENDING;
+        boolean isFuture = leave.getFromDate().isAfter(today);
+
+        if (!(isPending || isFuture)) {
+            throw new IllegalStateException("Only unapproved (PENDING) or future-dated leaves can be withdrawn");
         }
 
-        leaveRepository.delete(leave);
-        log.info("Leave deleted successfully for leaveId={} by user '{}'", leaveId, email);
+        // 5️⃣ Withdraw leave
+        leave.setStatus(EnumConstants.LeaveStatus.WITHDRAWN);
+        leave.setWithdrawn(true); // mark as withdrawn
+        leave.setUpdatedAt(LocalDateTime.now());
+        leaveRepository.save(leave);
+
+        log.info("Leave withdrawn successfully for leaveId={} by user '{}'", leaveId, email);
     }
+
+
 
     /**
      * Updates the status of a leave request (APPROVED or REJECTED) by an admin
@@ -510,26 +589,30 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         EmployeeLeave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found with id: " + leaveId));
 
-
+        UUID employeeId = leave.getEmployee().getEmployeeId();
         // Fetch employee along with reporting manager in one query
-        Employee employee = employeeRepository.findByIdWithManager(leave.getEmployee().getEmployeeId())
+        Employee employee = employeeRepository.findByIdWithManager(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
+
+        System.out.println(employee.getDesignation());
         int availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
-        int workingDays = leave.getWorkingDays() != null ? leave.getWorkingDays() : 0;
+        Double workingDays = leave.getLeaveDuration() != null ? Double.valueOf(leave.getLeaveDuration()) : 0.0;
 
         // Validate working days
         if (workingDays <= 0) {
             throw new IllegalArgumentException("Working days must be greater than zero");
         }
 
-        // Deduct only if leave type is not UNPAID
-        if (leave.getType() != null && leave.getType() != EnumConstants.LeaveType.UNPAID) {
+        // Deduct only if leave type is not PAID
+        if (leave.getFinancialType() != null && leave.getFinancialType() != EnumConstants.FinancialType.UNPAID) {
             if (workingDays > availableLeaves) {
                 throw new IllegalArgumentException("Insufficient available leaves");
             }
 
-            employee.setAvailableLeaves(availableLeaves - workingDays);
+
+            Integer result = (int) (availableLeaves - workingDays);
+            employee.setAvailableLeaves(result);
 
             // Persist updated employee safely
             employeeRepository.save(employee);
@@ -584,7 +667,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             String employeeName = employee.getFirstName();
 
             String subject = "Your Leave Request ("
-                    + (leave.getType() != null ? leave.getType() : "") + ") has been "
+                    + (leave.getLeaveCategory() != null ? leave.getLeaveCategory() : "") + ") has been "
                     + (leave.getStatus() != null ? leave.getStatus() : "UPDATED");
 
             String status = leave.getStatus() != null ? leave.getStatus().name() : "UPDATED";
@@ -600,7 +683,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
             Leave Period: %s to %s
             Type: %s
-            Working Days: %d
+            Leave Duration: %.1f
             Holidays: %d
             Manager Comment: %s
 
@@ -611,8 +694,8 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                         status,
                         leave.getFromDate(),
                         leave.getToDate(),
-                        leave.getType() != null ? leave.getType() : "N/A",
-                        leave.getWorkingDays() != null ? leave.getWorkingDays() : 0,
+                        leave.getLeaveCategory() != null ? leave.getLeaveCategory() : "N/A",
+                        leave.getLeaveDuration() != null ? leave.getLeaveDuration() : 0,
                         leave.getHolidays() != null ? leave.getHolidays() : 0,
                         managerComment,
                         managerName
@@ -637,7 +720,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
             // Send email from manager if email exists, else fallback to employee email
             String senderEmail = managerEmail != null ? managerEmail : employeeEmail;
-            mailService.sendMail(senderEmail, employeeEmail, subject, body);
+            mailService.sendMail(senderEmail, employeeEmail, subject, body,null);
 
             log.info("Leave status notification email sent to employee '{}'", employeeEmail);
 
@@ -659,7 +742,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      * @throws IllegalArgumentException if fromDate or toDate is null or fromDate is after toDate
      */
     @Override
-    public  WorkdayResponseDTO calculateWorkingDays(DateRangeRequestDTO request) {
+    public WorkdayResponseDTO calculateWorkingDays(DateRangeRequestDTO request) {
         LocalDate fromDate = request.getFromDate();
         LocalDate endDate = request.getToDate();
 
@@ -670,7 +753,10 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         // Fetch holidays in the given date range
         List<Holiday> holidaysList = holidayRepository.findByHolidayDateBetween(fromDate, endDate);
-        int holidays = holidaysList.size();
+        Set<LocalDate> holidaysSet = holidaysList.stream()
+                .map(Holiday::getHolidayDate)
+                .collect(Collectors.toSet());
+        int holidays = holidaysSet.size();
         log.debug("Number of holidays between {} and {}: {}", fromDate, endDate, holidays);
 
         // Count weekends
@@ -688,50 +774,30 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         // Calculate totals
         int totalDays = (int) ChronoUnit.DAYS.between(fromDate, endDate) + 1;
         int totalHolidays = holidays + weekendCount;
-        int workingDays = totalDays - totalHolidays;
+        Double leaveDuration = (double) (totalDays - totalHolidays);
+
+        Boolean partialDay = Boolean.TRUE.equals(request.getPartialDay());
+        if (partialDay) {
+            leaveDuration = (leaveDuration != null ? leaveDuration : 0.0) - 0.5;
+            if (leaveDuration < 0) {
+                leaveDuration = 0.0;
+            }
+        }
 
         log.info("Total days: {}, Holidays: {}, Weekends: {}, Working days: {}",
-                totalDays, holidays, weekendCount, workingDays);
+                totalDays, holidays, weekendCount, leaveDuration);
 
         return WorkdayResponseDTO.builder()
                 .totalDays(totalDays)
                 .holidays(holidays)
                 .weekends(weekendCount)
                 .totalHolidays(totalHolidays)
-                .workingDays(workingDays)
+                .leaveDuration(leaveDuration)
                 .build();
     }
 
 
-    /**
-     * Fetches all company holidays and returns them as a sorted map.
-     * <p>
-     * The map key is the holiday date in "yyyy-MM-dd" format,
-     * and the value is the holiday name.
-     * The holidays are sorted by date in ascending order.
-     *
-     * @return a LinkedHashMap of holiday dates to holiday names
-     */
-    @Override
-    public Map<String, String> getAllHolidaysMap() {
-        log.info("Fetching all company holidays from the database");
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        Map<String, String> holidaysMap = holidayRepository.findAll()
-                .stream()
-                .sorted(Comparator.comparing(Holiday::getHolidayDate))
-                .collect(Collectors.toMap(
-                        h -> h.getHolidayDate().format(formatter),
-                        Holiday::getName,
-                        (existing, replacement) -> existing, // handle duplicates
-                        LinkedHashMap::new // preserve insertion order
-                ));
-
-        log.info("Fetched {} holidays", holidaysMap.size());
-
-        return holidaysMap;
-    }
 
 
     /**
@@ -753,14 +819,125 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 )
                 .fromDate(leave.getFromDate())
                 .toDate(leave.getToDate())
-                .type(leave.getType() != null ? leave.getType().name() : null)
+                .leaveCategoryType(leave.getLeaveCategory() != null ? leave.getLeaveCategory().name() : null)
+                .financialType(leave.getFinancialType()!=null?leave.getFinancialType().name():null)
                 .subject(leave.getSubject())
                 .context(leave.getContext())
-                .workingdays(leave.getWorkingDays())
+                .leaveDuration(leave.getLeaveDuration())
                 .holidays(leave.getHolidays())
                 .status(leave.getStatus() != null ? leave.getStatus().name() : null)
                 .managerComment(leave.getManagerComment())
                 .build();
     }
+    /**
+     * @param employeeId   UUID of the employee requesting leave
+     * @param leaveDuration Requested leave duration in days
+     * @return WebResponseDTO containing LeaveAvailabilityDTO with availability info and guidance
+     */
+    @Override
+    public WebResponseDTO<LeaveAvailabilityDTO> checkLeaveAvailability(UUID employeeId, Double leaveDuration) {
+        log.info("Checking  leave availability for employeeId={}, requestedDuration={}, leaveType={}", employeeId, leaveDuration);
+
+
+        // Validate leave duration
+        if (leaveDuration == null || leaveDuration <= 0) {
+            log.warn("Invalid leave duration provided: {}", leaveDuration);
+            return new WebResponseDTO<>(false, "Invalid leave duration. Must be greater than 0.", 400);
+        }
+
+        Optional<Employee> employeeOpt = employeeRepository.findById(employeeId);
+        if (employeeOpt.isEmpty()) {
+            log.warn("Employee not found for ID: {}", employeeId);
+            return new WebResponseDTO<>(false, "Employee not found for ID: " + employeeId, 404);
+        }
+
+        Employee employee = employeeOpt.get();
+        int availableLeaves = employee.getAvailableLeaves() != null ? employee.getAvailableLeaves() : 0;
+        log.debug("Employee {} has {} available CASUAL leaves", employeeId, availableLeaves);
+
+        boolean sufficient = availableLeaves >= leaveDuration;
+
+        String message;
+        if (sufficient) {
+            message = "You have sufficient  leaves.";
+        } else {
+            message = "You do not have enough  leaves. " +
+                    "Please adjust the leave dates or duration, " +
+                    "otherwise select UNPAID Leave.";
+        }
+        LeaveAvailabilityDTO dto = LeaveAvailabilityDTO.builder()
+                .isAvailable(sufficient)
+                .availableLeaves(availableLeaves)
+                .requestedLeave(leaveDuration)
+                .message(message)
+                .build();
+
+        log.info("Leave check result for employeeId={}: isAvailable={}, leaveType={}", employeeId, sufficient);
+
+        return new WebResponseDTO<>(true, "Leave check completed.", 200, dto);
+    }
+
+
+
+    /**
+     * Fetches all pending leaves for a manager identified by their company email.
+     *
+     * This method performs the following steps:
+     * 1. Finds the User entity by the provided manager email.
+     * 2. Retrieves the corresponding Employee record for that User.
+     * 3. Queries the leave repository for all pending leaves under this manager.
+     * 4. Maps the pending EmployeeLeave entities to ManagerLeaveDashboardDTO objects.
+     *
+     * @param managerEmail the company email of the manager
+     * @return a list of ManagerLeaveDashboardDTO containing pending leave details
+     * @throws EntityNotFoundException if the User or Employee corresponding to the email is not found
+     */
+    public List<ManagerLeaveDashboardDTO> getPendingLeavesForManager(String managerEmail) {
+        log.info("==== Start: Fetching pending leaves for manager with email={} ====", managerEmail);
+
+        // 1. Fetch user by email
+        User user = userRepository.findByCompanyEmail(managerEmail)
+                .orElseThrow(() -> {
+                    log.error("User not found with email={}", managerEmail);
+                    return new EntityNotFoundException("Manager not found with email: " + managerEmail);
+                });
+        log.debug("Found userId={} for managerEmail={}", user.getUserId(), managerEmail);
+
+        // 2. Fetch employee (manager) by userId
+        Employee manager = employeeRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> {
+                    log.error("Employee record not found for userId={}", user.getUserId());
+                    return new EntityNotFoundException("Manager record not found for userId: " + user.getUserId());
+                });
+        log.debug("Found managerId={} for userId={}", manager.getEmployeeId(), user.getUserId());
+
+        // 3. Fetch pending leaves for this manager
+        List<EmployeeLeave> leaves = leaveRepository.findPendingLeavesByManager(manager.getEmployeeId(), EnumConstants.LeaveStatus.PENDING);
+        log.info("Found {} pending leave(s) for managerId={}", leaves.size(), manager.getEmployeeId());
+
+        // 4. Map to DTOs
+        List<ManagerLeaveDashboardDTO> dtoList = leaves.stream()
+                .map(el -> {
+                    ManagerLeaveDashboardDTO dto = ManagerLeaveDashboardDTO.builder()
+                            .leaveId(el.getLeaveId())
+                            .employeeName(el.getEmployee().getFirstName() + " " + el.getEmployee().getLastName())
+                            .leaveType(el.getLeaveCategory().name())
+                            .leaveDuration(el.getLeaveDuration())
+                            .reason(el.getContext())
+                            .attachmentUrl(el.getAttachmentUrl())
+                            .remainingLeaves(el.getEmployee().getAvailableLeaves())
+                            .status(el.getStatus().name())
+                            .build();
+                    log.debug("Mapped leaveId={} for employeeId={} to DTO", el.getLeaveId(), el.getEmployee().getEmployeeId());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        log.info("==== Completed fetching pending leaves for managerId={} ====", manager.getEmployeeId());
+        return dtoList;
+    }
+
+
+
 
 }
