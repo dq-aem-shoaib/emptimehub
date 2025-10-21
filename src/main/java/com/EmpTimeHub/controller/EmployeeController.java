@@ -15,6 +15,7 @@ import com.EmpTimeHub.service.AddressService;
 import com.EmpTimeHub.service.EmployeeService;
 import com.EmpTimeHub.service.TimeSheetService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ import static com.EmpTimeHub.constants.EndpointConstants.*;
  * with roles such as <b>EMPLOYEE</b> and <b>ADMIN</b> depending on
  * the specific functionality.</p>
  */
+@Slf4j
 @RestController
 @AllArgsConstructor
 public class EmployeeController {
@@ -133,9 +135,10 @@ public class EmployeeController {
     @PutMapping(EMPLOYEE_TIMESHEET_UPDATE)
     public ResponseEntity<WebResponseDTO<String>> getTimeSheetUpdate(
             @RequestParam UUID timesheetId,
-            @ModelAttribute TimeSheetModel sheetModel,
+            @RequestBody TimeSheetModel sheetModel,
             @AuthenticationPrincipal UserDetails userDetails) {
 
+        log.info("updating time sheet...{}",sheetModel);
         timeSheetService.updateTimeSheet(timesheetId, sheetModel, userDetails.getUsername());
         WebResponseDTO<String> dto = new WebResponseDTO<>(
                 true, "Timesheet updated successfully", HttpStatus.OK.value());
