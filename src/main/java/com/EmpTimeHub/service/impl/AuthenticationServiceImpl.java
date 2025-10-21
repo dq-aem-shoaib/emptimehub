@@ -72,7 +72,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             employeeRepository.findByUser_UserId(user.getUserId()).ifPresentOrElse(employee -> {
 
                 BeanUtils.copyProperties(employee , employeeLoginResponseDTO);
-                employeeLoginResponseDTO.setClientId(employee.getClient().getClientId());
+                if(employee.getClient()!=null) {
+                    employeeLoginResponseDTO.setClientId(employee.getClient().getClientId());
+                }
                 employeeLoginResponseDTO.setResponseMessage("Employee login successful!");
                 employeeLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
             }, () -> employeeLoginResponseDTO.setResponseMessage("Employee details not found for this user."));
@@ -85,6 +87,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             userLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
 
             return  new ApiResponse<>(userLoginResponseDTO,"Admin details  found for this user.");
+        }
+        else if(user.getRole().equals(EnumConstants.Role.MANAGER)){
+            UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO();
+            BeanUtils.copyProperties(user , userLoginResponseDTO);
+            userLoginResponseDTO.setLoginResponseDTO(loginResponseDTO);
+
+            return  new ApiResponse<>(userLoginResponseDTO,"Manager details  found for this user.");
         }else {
             return  new ApiResponse<>(null,"User details not found for this user.");
         }

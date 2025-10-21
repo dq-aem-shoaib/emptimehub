@@ -1,5 +1,6 @@
 package com.EmpTimeHub.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,15 +26,11 @@ public class Client {
     @Column(name = "client_id", updatable = false, nullable = false)
     private UUID clientId;
 
-    // Each client has one unique user (One-to-One)
+    /** Each client has one unique user */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_client_user"))
+    @JoinColumn(name = "user_id", nullable = false, unique = true,
+            foreignKey = @ForeignKey(name = "fk_client_user"))
     private User user;
-
-    // Each client has one unique address (One-to-One)
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_client_address"))
-    private Address address;
 
     @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
@@ -45,6 +43,9 @@ public class Client {
 
     @Column(name = "gst", length = 30)
     private String gst;
+
+    @Column(name = "tan_number", length = 20)
+    private String tanNumber; // ✅ Newly added field
 
     @Column(name = "currency", length = 10)
     private String currency;
@@ -62,4 +63,8 @@ public class Client {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ClientPoc> pocs;
 }

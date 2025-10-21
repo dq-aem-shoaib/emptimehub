@@ -1,0 +1,2 @@
+ALTER TABLE employee
+ADD COLUMN company_id VARCHAR(10);

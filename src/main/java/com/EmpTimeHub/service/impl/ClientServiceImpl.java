@@ -2,14 +2,13 @@ package com.EmpTimeHub.service.impl;
 
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.ClientDTO;
-import com.EmpTimeHub.entity.Address;
 import com.EmpTimeHub.entity.Client;
+import com.EmpTimeHub.entity.ClientPoc;
 import com.EmpTimeHub.entity.User;
+import com.EmpTimeHub.model.AddressModel;
 import com.EmpTimeHub.model.ClientModel;
-import com.EmpTimeHub.repository.AddressRepository;
-import com.EmpTimeHub.repository.ClientRepository;
-import com.EmpTimeHub.repository.EmployeeRepository;
-import com.EmpTimeHub.repository.UserRepository;
+import com.EmpTimeHub.repository.*;
+import com.EmpTimeHub.service.AddressService;
 import com.EmpTimeHub.service.ClientService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +16,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -32,6 +33,8 @@ public class ClientServiceImpl implements ClientService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClientRepository clientRepo;
+    private final AddressService addressService;
+    private final ClientPocRepository clientPocRepository;
 
     @Transactional
     @Override
@@ -46,29 +49,22 @@ public class ClientServiceImpl implements ClientService {
                 substring(clientModel.getPanNumber().length() - 4);
         //Encryption
         String encryptedPassword = passwordEncoder.encode(rawPassword);
+
+        log.info("Client added with username: {} and Password: {}",username,rawPassword);
+
         //  Save User
         User user = User.builder()
                 .userName(username)
                 .companyEmail(clientModel.getEmail())
                 .password(encryptedPassword)
-                .role(EnumConstants.Role.EMPLOYEE)
+                .role(EnumConstants.Role.CLIENT)
                 .build();
         User savedUser = userRepository.save(user);
 
-        //  Build Address entity (not yet saved)
-        Address address = Address.builder()
-                .houseNo(clientModel.getHouseNo())
-                .streetName(clientModel.getStreetName())
-                .city(clientModel.getCity())
-                .state(clientModel.getState())
-                .country(clientModel.getCountry())
-                .pincode(clientModel.getPinCode())
-                .build();
 
         //Build Client
         Client client = Client.builder()
                 .user(user)
-                .address(address)
                 .companyName(clientModel.getCompanyName())
                 .contactNumber(clientModel.getContactNumber())
                 .email(clientModel.getEmail())
@@ -76,10 +72,28 @@ public class ClientServiceImpl implements ClientService {
                 .currency(clientModel.getCurrency())
                 .panNumber(clientModel.getPanNumber())
                 .status("ACTIVE")
+                .tanNumber(clientModel.getTanNumber())
                 .createdAt(LocalDateTime.now()).build();
-        return clientRepo.save(client);
+
+        Client savedClient = clientRepo.save(client);
+        addressService.addAddresses(EnumConstants.EntityType.CLIENT.getValue(), client.getClientId(), clientModel.getAddresses());
+
+        // Build and attach Client POCs
+        List<ClientPoc> clientPocs = clientModel.getClientPocs().stream()
+                .map(pocModel -> ClientPoc.builder()
+                        .name(pocModel.getName())
+                        .email(pocModel.getEmail())
+                        .contactNumber(pocModel.getContactNumber())
+                        .designation(pocModel.getDesignation())
+                        .client(client)  // <-- Important to set the relationship
+                        .build())
+                .collect(Collectors.toList());
+
+        client.setPocs(clientPocs);
+
+
+        return client;
     }
-    //helper method to convert Client to CLientDTO
     @Override
     public ClientDTO getClientById(UUID clientId){
         Client client = clientRepository.findById(clientId)
@@ -111,17 +125,10 @@ public class ClientServiceImpl implements ClientService {
         if (clientModel.getPanNumber() != null) client.setPanNumber(clientModel.getPanNumber());
 
         // ---------- Address Update ----------
-        Address address = addressRepository.findById(client.getAddress().getAddressId())
-                .orElseThrow(() -> new RuntimeException("Address not found for client: " + clientId));
-
-        if (clientModel.getHouseNo() != null) address.setHouseNo(clientModel.getHouseNo());
-        if (clientModel.getStreetName() != null) address.setStreetName(clientModel.getStreetName());
-        if (clientModel.getCity() != null) address.setCity(clientModel.getCity());
-        if (clientModel.getState() != null) address.setState(clientModel.getState());
-        if (clientModel.getPinCode() != null) address.setPincode(clientModel.getPinCode());
-        if (clientModel.getCountry() != null) address.setCountry(clientModel.getCountry());
-
-        addressRepository.save(address);
+        List<AddressModel> clientAddresses = addressService.getAddressesForEntity("CLIENT", client.getClientId());
+        if (clientModel.getAddresses() != null && !clientModel.getAddresses().isEmpty()) {
+            addressService.addAddresses(EnumConstants.EntityType.CLIENT.getValue(), clientId ,clientAddresses );
+        }
 
         // ---------- Update timestamp ----------
         client.setUpdatedAt(LocalDateTime.now());
@@ -145,14 +152,12 @@ public class ClientServiceImpl implements ClientService {
         if (client.getUser() != null) {
             dto.setUserId(client.getUser().getUserId());
         }
-        if (client.getAddress() != null) {
-            dto.setAddressId(client.getAddress().getAddressId());
-            dto.setHouseNo(client.getAddress().getHouseNo());
-            dto.setStreetName(client.getAddress().getStreetName());
-            dto.setCity(client.getAddress().getCity());
-            dto.setState(client.getAddress().getState());
-            dto.setPinCode(client.getAddress().getPincode());
-            dto.setCountry(client.getAddress().getCountry());
+
+        List<AddressModel> clientAddresses = addressService.getAddressesForEntity(EnumConstants.EntityType.CLIENT.getValue(), client.getClientId());
+
+        dto.setPocs(client.getPocs());
+        if(clientAddresses!= null && !clientAddresses.isEmpty()){
+            dto.setAddresses(clientAddresses);
         }
         return dto;
     }

@@ -1,10 +1,13 @@
 package com.EmpTimeHub.controller;
 
 import com.EmpTimeHub.constants.EnumConstants;
-import com.EmpTimeHub.dto.LeaveRequestDTO;
-import com.EmpTimeHub.dto.LeaveResponseDTO;
-import com.EmpTimeHub.dto.WebResponseDTO;
+import com.EmpTimeHub.dto.*;
+import com.EmpTimeHub.entity.User;
 import com.EmpTimeHub.service.EmployeeLeaveService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,6 +17,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
@@ -34,6 +40,18 @@ public class EmployeeLeaveController {
      * @param userDetails  Authenticated user's details injected by Spring Security.
      * @return ResponseEntity containing WebResponseDTO with leave details, success flag, and message.
      */
+
+    @Operation(
+            summary = "Apply for Leave",
+            description = "Submit a new leave request with optional attachment (e.g., medical certificate or document).",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "multipart/form-data",
+                            schema = @Schema(implementation = LeaveRequestDTO.class)
+                    )
+            )
+    )
     @PreAuthorize("hasRole('EMPLOYEE')")
     @PostMapping(EMPLOYEE_LEAVE_REQUEST)
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> applyLeave(
@@ -44,7 +62,7 @@ public class EmployeeLeaveController {
                 userDetails.getUsername(),
                 request.getFromDate(),
                 request.getToDate(),
-                request.getType());
+                request.getCategoryType());
 
         LeaveResponseDTO leaveResponseDTO = leaveService.applyLeave(request, userDetails.getUsername());
 
@@ -69,7 +87,8 @@ public class EmployeeLeaveController {
      *
      * @param employeeId Optional UUID of the employee to filter leaves (ADMIN only).
      * @param month      Optional month (format: yyyy-MM) to filter leaves.
-     * @param type       Optional leave type filter (e.g., PAID, UNPAID).
+     * @param financialType       Optional leave type filter (e.g., PAID, UNPAID).
+     * @param leaveCategory       Optional leave type filter (e.g., SICK, CASUAL).
      * @param status     Optional leave status filter (e.g., APPROVED, PENDING).
      * @param page       Page number for pagination (default 0).
      * @param size       Page size for pagination (default 10).
@@ -78,21 +97,27 @@ public class EmployeeLeaveController {
      * @return ResponseEntity containing WebResponseDTO with paginated leave summaries.
      */
     @GetMapping(LEAVE_SUMMARY)
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE') OR hasRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<Page<LeaveResponseDTO>>> getLeaves(
             @RequestParam(required = false) UUID employeeId,
             @RequestParam(required = false) String month,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) EnumConstants.FinancialType financialType,
+            @RequestParam(required = false) EnumConstants.LeaveCategory leaveCategory,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean futureApproved,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "fromDate,desc") String sort,
             @AuthenticationPrincipal UserDetails user) {
 
-        log.info("User '{}' requested leave summary with filters: employeeId={}, month={}, type={}, status={}, page={}, size={}, sort={}",
-                user.getUsername(), employeeId, month, type, status, page, size, sort);
+        log.info("User '{}' requested leave summary with filters: employeeId={}, month={}, financialType={},leaveCategoryType={}, status={}, page={}, size={}, sort={}",
+                user.getUsername(), employeeId, month, financialType,leaveCategory, status, page, size, sort);
 
-        Page<LeaveResponseDTO> leaves = leaveService.getLeaves(employeeId, month, type, status, page, size, sort, user);
+        String financialTypeStr = (financialType != null) ? financialType.name() : null;
+        String leaveCategoryStr = (leaveCategory != null) ? leaveCategory.name() : null;
+
+        Page<LeaveResponseDTO> leaves = leaveService.getLeaves(employeeId, month, financialTypeStr,leaveCategoryStr, status, page, size, sort, user,futureApproved,date);
 
         log.info("Fetched {} leave records for user '{}'", leaves.getTotalElements(), user.getUsername());
 
@@ -148,6 +173,17 @@ public class EmployeeLeaveController {
      * @param userDetails Authenticated user details injected by Spring Security.
      * @return ResponseEntity containing WebResponseDTO with the updated leave details, success flag, and message.
      */
+    @Operation(
+            summary = "Update  Leave",
+            description = "Update a new leave request with optional attachment (e.g., medical certificate or document).",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = "multipart/form-data",
+                            schema = @Schema(implementation = LeaveRequestDTO.class)
+                    )
+            )
+    )
     @PreAuthorize("hasRole('EMPLOYEE')")
     @PutMapping(EMPLOYEE_LEAVE_UPDATE)
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeave(
@@ -172,35 +208,37 @@ public class EmployeeLeaveController {
 
 
     /**
-     * Deletes a leave request for the authenticated employee by its ID.
+     * Withdraws a leave request for the authenticated employee by its ID.
      * <p>
      * Accessible only by users with role 'EMPLOYEE'.
+     * Employees can withdraw only pending or today/future-dated leaves.
      *
-     * @param id          UUID of the leave to delete.
+     * @param id          UUID of the leave to withdraw.
      * @param userDetails Authenticated user details injected by Spring Security.
      * @return ResponseEntity containing WebResponseDTO with a success message.
      */
     @PreAuthorize("hasRole('EMPLOYEE')")
-    @DeleteMapping(EMPLOYEE_LEAVE_DELETE)
-    public ResponseEntity<WebResponseDTO<String>> deleteLeave(
-            @PathVariable UUID id,
+    @PutMapping(EMPLOYEE_LEAVE_WITHDRAW)
+    public ResponseEntity<WebResponseDTO<String>> withdrawLeave(
+            @RequestParam UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        log.info("Employee '{}' requested deletion of leave with leaveId={}", userDetails.getUsername(), id);
+        log.info("Employee '{}' requested withdrawal of leave with leaveId={}", userDetails.getUsername(), id);
 
-        leaveService.deleteLeave(id, userDetails.getUsername());
+        leaveService.withdrawLeave(id, userDetails.getUsername());
 
-        log.info("Leave deleted successfully for leaveId={}, employee={}", id, userDetails.getUsername());
+        log.info("Leave withdrawn successfully for leaveId={}, employee={}", id, userDetails.getUsername());
 
         WebResponseDTO<String> response = WebResponseDTO.<String>builder()
                 .flag(true)
-                .message("Leave deleted successfully")
+                .message("Leave withdrawn successfully")
                 .status(200)
-                .response("Leave ID " + id + " deleted")
+                .response("Leave ID " + id + " withdrawn successfully")
                 .build();
 
         return ResponseEntity.ok(response);
     }
+
 
     /**
      * Endpoint to update the status of an employee leave request (APPROVED or REJECTED) by an admin.
@@ -215,7 +253,7 @@ public class EmployeeLeaveController {
      * @return {@link WebResponseDTO} containing the updated leave details in a {@link LeaveResponseDTO}
      */
     @PutMapping(EMPLOYEE_LEAVE_STATUS_UPDATE)
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeaveStatus(
             @PathVariable UUID leaveId,
             @RequestParam EnumConstants.LeaveStatus status,
@@ -230,5 +268,79 @@ public class EmployeeLeaveController {
                 .response(response)
                 .build());
     }
+
+    /**
+     * Calculate the number of working days for a given date range.
+     *
+     * @param request the date range request containing fromDate and toDate
+     * @return ResponseEntity containing a WebResponseDTO with the calculated working days
+     */
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PostMapping(EMPLOYEE_WORKDAYS)
+    public ResponseEntity<WebResponseDTO<WorkdayResponseDTO>> calculateWorkingDays(
+            @RequestBody DateRangeRequestDTO request) {
+
+        log.info("Received request to calculate working days from {} to {}",
+                request.getFromDate(), request.getToDate());
+
+        WorkdayResponseDTO response = leaveService.calculateWorkingDays(request);
+
+        log.info("Calculated working days: {}", response.getLeaveDuration());
+
+        return ResponseEntity.ok(WebResponseDTO.<WorkdayResponseDTO>builder()
+                .flag(true)
+                .status(200)
+                .message("Working days calculated successfully")
+                .response(response)
+                .build());
+    }
+
+
+    /**
+     * Checks CASUAL leave availability for an employee.
+     * Automatically marks leave as UNPAID if balance is insufficient.
+     * Frontend can adjust leave duration only, not type.
+     * Accessible to users with EMPLOYEE role.
+     */
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PostMapping(EMPLOYEE_LEAVE_AVAILABILTY)
+    public ResponseEntity<WebResponseDTO<LeaveAvailabilityDTO>> checkLeaveAvailability(
+            @RequestParam UUID employeeId,
+            @RequestParam Double leaveDuration) {
+
+        WebResponseDTO<LeaveAvailabilityDTO> response =  leaveService.checkLeaveAvailability(employeeId, leaveDuration);
+        return ResponseEntity.status(response.getStatus() != null ? response.getStatus() : 200)
+                .body(response);
+    }
+
+    /**
+     * Get all pending leaves for the logged-in manager.
+     *
+     * @param loggedInUser Currently authenticated user (must be a manager)
+     * @return WebResponseDTO containing list of pending leaves for manager's employees
+     */
+    @GetMapping(EMPLOYEE_PENDING_LEAVES)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<WebResponseDTO<List<ManagerLeaveDashboardDTO>>> getPendingLeaves(
+            @AuthenticationPrincipal UserDetails loggedInUser
+    ) {
+        log.info("Fetching pending leaves for manager email={}", loggedInUser.getUsername());
+
+        List<ManagerLeaveDashboardDTO> pendingLeaves = leaveService.getPendingLeavesForManager(loggedInUser.getUsername());
+
+        log.info("Found {} pending leave(s) for manager email={}", pendingLeaves.size(), loggedInUser.getUsername());
+
+        WebResponseDTO<List<ManagerLeaveDashboardDTO>> response = WebResponseDTO.<List<ManagerLeaveDashboardDTO>>builder()
+                .flag(true)
+                .status(200)
+                .message("Pending leaves fetched successfully")
+                .response(pendingLeaves)
+                .build();
+
+        log.info("Returning pending leaves response for manager email={}", loggedInUser.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+
 
 }

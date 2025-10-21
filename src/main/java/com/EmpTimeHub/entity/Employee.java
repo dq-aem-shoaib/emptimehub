@@ -1,11 +1,13 @@
 package com.EmpTimeHub.entity;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,23 +35,42 @@ public class Employee {
      * When the employee is deleted, the user can also be removed if needed (cascade = ALL optional).
      */
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_user"))
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_employee_user")
+    )
     private User user;
 
     /** Optional relationship to Client — can be NULL */
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_employee_client"))
+    @JoinColumn(
+            name = "client_id",
+            foreignKey = @ForeignKey(name = "fk_employee_client")
+    )
     private Client client;
 
-    /** Each employee has a unique address record */
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_address"))
-    private Address address;
+    @Column(name = "company_id",  length = 50)
+    private String companyId;
 
     /** Each employee has unique bank details */
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
-    @JoinColumn(name = "bank_account_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_employee_bank"))
+    @OneToOne(fetch = FetchType.LAZY, optional = true, cascade = CascadeType.ALL)
+    @JoinColumn(
+            name = "bank_account_id",
+            unique = true,
+            nullable = true,
+            foreignKey = @ForeignKey(name = "fk_employee_bank")
+    )
     private BankDetails bankDetails;
+
+    /** Self-referencing relationship — an employee can have a reporting manager */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "reporting_manager_id",
+            foreignKey = @ForeignKey(name = "fk_employee_reporting_manager")
+    )
+    private Employee reportingManager;
 
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
@@ -66,8 +87,18 @@ public class Employee {
     @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
-    @Column(name = "currency", length = 10)
-    private String currency;
+
+    @Column(name = "alternate_contact_number", length = 20)
+    private String alternateContactNumber;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "marital_status", length = 20)
+    private String maritalStatus;
+
+    @Column(name = "number_of_children")
+    private Integer numberOfChildren = 0;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
@@ -75,8 +106,13 @@ public class Employee {
     @Column(name = "date_of_joining")
     private LocalDate dateOfJoining;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "designation", length = 100)
-    private String designation;
+    private EnumConstants.Designation designation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name= "employment_type" , length = 50)
+    private EnumConstants.EmploymentType employmentType;
 
     @Column(name = "rate_card", precision = 10, scale = 2)
     private BigDecimal rateCard = BigDecimal.ZERO;
@@ -85,12 +121,15 @@ public class Employee {
     private String panNumber;
 
     @Column(name = "available_leaves", precision = 5)
-    private Integer availableLeaves;
+    private Double availableLeaves;
 
     @Column(name = "aadhar_number", length = 20)
     private String aadharNumber;
 
     // File URLs for documents
+    @Column(name = "employee_photo_url", length = 255)
+    private String employeePhotoUrl;
+
     @Column(name = "pan_card_url", length = 255)
     private String panCardUrl;
 

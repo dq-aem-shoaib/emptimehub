@@ -1,5 +1,7 @@
 package com.EmpTimeHub.service;
 
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * Service interface for sending emails within the system.
  */

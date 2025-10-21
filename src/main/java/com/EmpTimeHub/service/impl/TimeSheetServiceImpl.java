@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,7 +43,6 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     private final EmployeeRepository employeeRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final MailService mailService;
 
     /**
      * Creates a new timesheet entry for the logged-in employee.
@@ -262,6 +261,10 @@ public class TimeSheetServiceImpl implements TimeSheetService {
             LOG.error("Email mismatch for update: provided [{}], expected [{}]",
                     loggedInUserEmail, emp.getCompanyEmail());
             throw new UserNotFoundException("Please login with your company email address");
+        }
+
+        if(tsUpdated.getStatus().equals(EnumConstants.WorkRequest.APPROVED.name())){
+            throw new RuntimeException("You can not edit this");
         }
 
         LOG.debug("Applying field updates for timesheet: {}", timesheetId);
