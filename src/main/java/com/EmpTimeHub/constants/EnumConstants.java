@@ -34,7 +34,7 @@ public class EnumConstants {
     }
 
     public enum HolidayType {
-        PUBLIC, RELIGIOUS, COMPANY, REGIONAL
+        PUBLIC, RELIGIOUS, REGIONAL, COMPANY_SPECIFIC
     }
 
     public enum RecurrenceRule{

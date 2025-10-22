@@ -21,6 +21,7 @@ public class HolidayCalendarDTO {
     private LocalDate holidayDate;
     private String locationRegion;
     private boolean isHolidayActive;
+    private EnumConstants.HolidayType holidayType;
     private EnumConstants.RecurrenceRule recurrenceRule;
     private String calendarCountryCode;
     private UUID createdByAdminId;

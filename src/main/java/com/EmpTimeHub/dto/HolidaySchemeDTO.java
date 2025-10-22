@@ -28,4 +28,5 @@ public class HolidaySchemeDTO {
 
     // scheme-mapping with holidays
     private List<UUID> holidayCalendarId;
+
 }

@@ -22,6 +22,7 @@ public class HolidayCalendarModel {
     private EnumConstants.HolidayType holidayType;
     private EnumConstants.RecurrenceRule recurrenceRule;
     private String calendarCountryCode;
+    private boolean activeStatus;
 
 }
 

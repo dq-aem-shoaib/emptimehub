@@ -2,13 +2,10 @@ package com.EmpTimeHub.controller;
 
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.EmployeeDTO;
-import com.EmpTimeHub.dto.TimeSheetResponseDto;
 import com.EmpTimeHub.dto.WebResponseDTO;
 import com.EmpTimeHub.entity.Employee;
-import com.EmpTimeHub.entity.TimeSheet;
 import com.EmpTimeHub.entity.User;
 import com.EmpTimeHub.model.EmployeeModel;
-import com.EmpTimeHub.model.TimeSheetModel;
 import com.EmpTimeHub.repository.EmployeeRepository;
 import com.EmpTimeHub.repository.UserRepository;
 import com.EmpTimeHub.service.AddressService;
@@ -16,7 +13,6 @@ import com.EmpTimeHub.service.EmployeeService;
 import com.EmpTimeHub.service.TimeSheetService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,9 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
 
