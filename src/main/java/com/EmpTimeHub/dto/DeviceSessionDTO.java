@@ -24,18 +24,24 @@ public class DeviceSessionDTO {
     private String status;
     private TokenInfo token;
 
+
     @Builder
     public static DeviceSessionDTO from(DeviceSession session) {
+        if (session == null) {
+            return null;
+        }
+
         return DeviceSessionDTO.builder()
                 .deviceId(session.getDeviceId())
-                .deviceName(session.getDeviceName())
-                .ipAddress(session.getIpAddress())
-                .userAgent(session.getUserAgent())
+                .deviceName(session.getDeviceName() != null ? session.getDeviceName() : "Unknown Device")
+                .ipAddress(session.getIpAddress() != null ? session.getIpAddress() : "Unknown IP")
+                .userAgent(session.getUserAgent() != null ? session.getUserAgent() : "Unknown User-Agent")
                 .loginTime(session.getLoginTime())
                 .logoutTime(session.getLogoutTime())
-                .status(session.getIsActive()? "Active" : "De-Activate")
+                .status(Boolean.TRUE.equals(session.getIsActive()) ? "Active" : "De-Activate")
                 .token(null) // populate if needed
                 .build();
     }
+
 }
 

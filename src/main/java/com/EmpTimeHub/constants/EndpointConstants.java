@@ -85,11 +85,21 @@ public class EndpointConstants {
     public static final String  EMPLOYEE_PENDING_LEAVES=EMPLOYEE_API+"/leave"+"/pendingLeaves";
     public static final String  EMPLOYEE_LEAVE_STATUS_UPDATE=EMPLOYEE_API+"/leave"+"/updateStatus"+"/{leaveId}";
     public static final String EMPLOYEE_WORKDAYS = EMPLOYEE_API + "/workDays";
+    public static final String EMPLOYEE_APPROVED_LEAVES = EMPLOYEE_API + "/approved/leaves";
+
     //common api for admin and employee
     public static final String LEAVE_SUMMARY = EMPLOYEE_API + "/leave-summary";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
     public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
+
+   //  Notification Related EndPoints
+
+    public static final String NOTIFICATION_API = WEB_API_PREFIX + "/notification";
+    public static final String GET_NOTIFICATIONS = NOTIFICATION_API+"/getAllNotifications";
+    public static final String READ_NOTIFICATION = NOTIFICATION_API+"/read";
+    public static final String CLEAR_ALL_NOTIFICATIONS = NOTIFICATION_API+"/clearAll";
+    public static final String CLEAR_NOTIFICATION = NOTIFICATION_API+"/clear";
 
 }

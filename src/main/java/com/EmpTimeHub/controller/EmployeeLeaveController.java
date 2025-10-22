@@ -2,10 +2,8 @@ package com.EmpTimeHub.controller;
 
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.*;
-import com.EmpTimeHub.entity.User;
 import com.EmpTimeHub.service.EmployeeLeaveService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
@@ -342,5 +339,32 @@ public class EmployeeLeaveController {
     }
 
 
+    /**
+     * API to fetch approved leaves for the current year for the logged-in employee.
+     * Each leave is returned per day with duration and leave category.
+     *
+     * @param userDetails authenticated user details (username = company email)
+     * @return ResponseEntity with WebResponseDTO containing list of EmployeeLeaveDayDTO
+     */
+    @GetMapping(EMPLOYEE_APPROVED_LEAVES)
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<WebResponseDTO<List<EmployeeLeaveDayDTO>>> getApprovedLeavesForCurrentYear(
+            @AuthenticationPrincipal UserDetails userDetails) {
 
+        String companyMail = userDetails.getUsername();
+        log.info("Received request to fetch approved leaves for: {}", companyMail);
+
+        List<EmployeeLeaveDayDTO> leaveDays = leaveService.getApprovedLeavesForCurrentYear(companyMail);
+
+        log.info("Returning {} leave day entries for employee: {}", leaveDays.size(), companyMail);
+
+        WebResponseDTO<List<EmployeeLeaveDayDTO>> response = WebResponseDTO.<List<EmployeeLeaveDayDTO>>builder()
+                .flag(true)
+                .status(200)
+                .message("Approved leaves for current year fetched successfully")
+                .response(leaveDays)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }
