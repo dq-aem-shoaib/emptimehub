@@ -1,5 +1,7 @@
 package com.EmpTimeHub.service;
 
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * Service interface for sending emails within the system.
  */
@@ -14,5 +16,6 @@ public interface MailService {
      * @param body    Body content of the email.
      * @param name    Name of the sender (used in the email body or signature).
      */
-    void sendMail(String from, String to, String subject, String body, String name);
+    void sendMail(String from, String to, String subject, String body, MultipartFile multipartFile);
+    void sendMail(String to, String body);
 }

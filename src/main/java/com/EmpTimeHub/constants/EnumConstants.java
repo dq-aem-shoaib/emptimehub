@@ -13,16 +13,24 @@ public class EnumConstants {
         MANAGER
     }
     // Enums for leave type and status
-    public enum LeaveType {
-        PAID, UNPAID, SICK, CASUAL
+    public enum FinancialType {
+        PAID,
+        UNPAID
+    }
+
+    public enum LeaveCategory {
+        SICK,
+        CASUAL,
+        PLANNED,
+        UNPLANNED
     }
 
     public enum LeaveStatus {
-        PENDING, APPROVED, REJECTED
+        PENDING, APPROVED, REJECTED,WITHDRAWN
     }
 
     public enum WorkRequest{
-        SUBMITED,APPROVED,PENDING,REJECTED;
+        SUBMITTED,APPROVED,PENDING,REJECTED;
     }
 
     public enum HolidayType {

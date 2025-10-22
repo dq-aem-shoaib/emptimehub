@@ -14,5 +14,4 @@ public class TimeSheetModel {
     private BigDecimal hoursWorked;
     private String taskName;
     private String taskDescription;
-    private String status;
 }

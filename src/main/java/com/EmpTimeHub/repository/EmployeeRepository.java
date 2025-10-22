@@ -16,6 +16,10 @@ public interface EmployeeRepository extends JpaRepository<Employee,UUID> {
     Optional<Employee> findByUser_UserId(UUID userId);
     @Query("FROM Employee e WHERE e.companyEmail = :gmail")
     Employee getEmployeeByEmail(@Param("gmail") String email);
+
+    @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.reportingManager WHERE e.employeeId = :id")
+    Optional<Employee> findByIdWithManager(@Param("id") UUID id);
+
     List<Employee> findByDesignation(EnumConstants.Designation designation);
     Optional<Employee> findFirstByOrderByCreatedAtDesc();
 

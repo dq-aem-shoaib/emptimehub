@@ -29,11 +29,16 @@ public class EmployeeLeave {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approval_id")
-    private Admin approval;
+    private Employee reportingManager;
 
-    @Column(name = "leave_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private EnumConstants.LeaveType type;
+    @Column(name = "leave_category", nullable = false, length = 50)
+    private EnumConstants.LeaveCategory leaveCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "financial_type", nullable = false, length = 50)
+    private EnumConstants.FinancialType financialType;
+
 
     @Column(name = "from_date", nullable = false)
     private LocalDate fromDate;
@@ -52,7 +57,7 @@ public class EmployeeLeave {
     private EnumConstants.LeaveStatus status = EnumConstants.LeaveStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")
-    private String adminComment;
+    private String managerComment;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -60,10 +65,27 @@ public class EmployeeLeave {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-
-    @Column(name = "working_days", nullable = false)
-    private Integer workingDays;
+    @Column(name = "leave_duration", nullable = false)
+    private Double leaveDuration;
 
     @Column(name = "holidays", nullable = false)
     private Integer holidays;
+
+    @Column(name = "partial_day", nullable = false)
+    private Boolean partialDay = false;
+
+    @Column(name = "attachment_url", length = 255)
+    private String attachmentUrl;
+
+    @Column(name = "withdrawn", nullable = false)
+    private Boolean withdrawn = false;
+
+    @Column(name = "policy_violation", nullable = false)
+    private Boolean policyViolation = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String violationReason;
+
+    @Column(name = "notice_period_violation", nullable = false)
+    private Boolean noticePeriodViolation = false;
 }
