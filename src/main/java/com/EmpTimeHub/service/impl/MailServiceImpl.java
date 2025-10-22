@@ -64,15 +64,15 @@ public class MailServiceImpl implements MailService {
     public void sendMail(String to, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setText(body, true);
 
             mailSender.send(message);
-            log.info("Email sent successfully to '{}', subject='{}'", to, body);
+            log.info("Email sent successfully to '{}', body='{}'", to, body);
         } catch (MessagingException e) {
-            log.error("Failed to send email to '{}': {}", to, e.getMessage(), e);
+            log.error("Failed to send email to '{}': {}", to, e.getMessage());
         }
     }
 }

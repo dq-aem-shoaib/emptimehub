@@ -22,7 +22,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,6 +43,7 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     private final EmployeeRepository employeeRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final MailService mailService;
 
     /**
      * Creates a new timesheet entry for the logged-in employee.
@@ -323,7 +323,20 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     @Override
     public void requestToManager(String loggedInEmail) {
 
+        Employee employee = employeeRepository.getEmployeeByEmail(loggedInEmail);
+        Employee manager = employeeRepository.findByIdWithManager(employee.getEmployeeId())
+                .map(emp -> {
+                    if (emp.getReportingManager() == null) {
+                        throw new UserNotFoundException("Manager not found for employee: " + emp.getEmployeeId());
+                    }
+                    return emp.getReportingManager();
+                })
+                .orElseThrow(() -> new UserNotFoundException("Employee not found with ID: " + employee.getEmployeeId()));
 
+        String approvalMessage = "<h3>Please approve TimeSheets for past 5 or 7 days,having employee-id: "+employee.getCompanyId()
+                +".</h3>\n <h4>follow link below:<h/4>\n"
+                +"<a href=\"https://192.168.1.19:8081/web/api/v1/employee/manager/timesheet\">Approve TimeSheets</a>";
+        mailService.sendMail(manager.getCompanyEmail(),approvalMessage);
 
     }
 }

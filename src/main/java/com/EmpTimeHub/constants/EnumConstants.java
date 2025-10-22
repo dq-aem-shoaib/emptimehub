@@ -34,9 +34,12 @@ public class EnumConstants {
     }
 
     public enum HolidayType {
-        PUBLIC, RELIGIOUS, COMPANY
+        PUBLIC, RELIGIOUS, REGIONAL, COMPANY_SPECIFIC
     }
 
+    public enum RecurrenceRule{
+        ANNUAL, ONE_TIME;
+    }
     public enum PaymentStatus {
         PAID,
         UNPAID

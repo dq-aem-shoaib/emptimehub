@@ -1,5 +1,7 @@
 package com.EmpTimeHub.constants;
 
+import static com.EmpTimeHub.constants.EnumConstants.DayType.HOLIDAY;
+
 public class EndpointConstants {
 
     /**
@@ -45,6 +47,17 @@ public class EndpointConstants {
     public static final String ADMIN_UNASSIGN_CLIENT = ADMIN_API+"/emp/{empId}";
     public static final String ADD_CLIENT_ADDRESS = ADMIN_API+"/client/address/{clientId}";
 
+
+
+
+
+
+
+
+
+
+
+
     public static final String ADMIN_NAMES=ADMIN_API+"/getAllAdminNames";
     /**
      * User related endpoints
@@ -76,7 +89,7 @@ public class EndpointConstants {
     public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/timesheet/register";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
-    public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/final/submit";
+    public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/approvaltomanager";
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
@@ -95,4 +108,16 @@ public class EndpointConstants {
     public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
 
+    // HolidayCalender and scheme
+    public static final String HOLIDAYS = WEB_API_PREFIX + "/holidays";
+    public static final String HOLIDAYS_CALENDAR_REGISTER = HOLIDAYS + "/calendar/register";
+    public static final String HOLIDAYS_CALENDAR_VIEW_ALL = HOLIDAYS + VIEW + "/calendar";
+    public static final String HOLIDAYS_CALENDAR_VIEW_ID = HOLIDAYS + VIEW + "/calendar/{id}";
+    public static final String HOLIDAYS_CALENDAR_UPDATE = HOLIDAYS  + "/calendar" + UPDATE + "/{id}";
+    public static final String HOLIDAYS_CALENDAR_DELETE = HOLIDAYS + "/calendar/delete";
+    public static final String HOLIDAYS_SCHEME_REGISTER = HOLIDAYS + "/scheme/register";
+    public static final String HOLIDAYS_SCHEME_VIEW_ALL = HOLIDAYS + VIEW + "/scheme";
+    public static final String HOLIDAYS_SCHEME_VIEW_ID = HOLIDAYS + VIEW + "/scheme/{id}";
+    public static final String HOLIDAYS_SCHEME_UPDATE = HOLIDAYS  + "/scheme" + UPDATE + "/{id}";
+    public static final String HOLIDAYS_SCHEME_DELETE = HOLIDAYS + "/scheme/delete";
 }
