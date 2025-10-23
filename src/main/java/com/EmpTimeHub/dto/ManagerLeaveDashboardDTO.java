@@ -4,22 +4,30 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * DTO representing leave details shown on manager dashboard.
+ * DTO representing leave details shown on the manager dashboard.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ManagerLeaveDashboardDTO {
+
     private UUID leaveId;
     private String employeeName;
-    private String leaveType;
+
+    private String leaveCategory;
+    private String financialType;
+
+    private LocalDate fromDate;
+    private LocalDate toDate;
+
     private Double leaveDuration;
-    private String reason;
     private String attachmentUrl;
     private Double remainingLeaves;
+    private String context;
     private String status;
 }

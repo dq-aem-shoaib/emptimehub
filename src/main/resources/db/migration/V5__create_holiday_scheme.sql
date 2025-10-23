@@ -6,7 +6,7 @@ CREATE TABLE holiday_calendar (
     holiday_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     holiday_name VARCHAR(255) NOT NULL,
     holiday_date DATE NOT NULL,
-    holiday_type VARCHAR(50) NOT NULL CHECK (holiday_type IN ('PUBLIC', 'REGIONAL', 'COMPANY_SPECIFIC')),
+    holiday_type VARCHAR(50) NOT NULL CHECK (holiday_type IN ('PUBLIC', 'REGIONAL', 'COMPANY_SPECIFIC', 'RELIGIOUS')),
     location_region VARCHAR(255),
     description TEXT,
     recurrence_rule VARCHAR(20) DEFAULT 'ONE_TIME' CHECK (recurrence_rule IN ('ANNUAL', 'ONE_TIME')),

@@ -4,7 +4,7 @@ import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.*;
 import com.EmpTimeHub.entity.Employee;
 import com.EmpTimeHub.entity.EmployeeLeave;
-import com.EmpTimeHub.entity.Holiday;
+import com.EmpTimeHub.entity.HolidayCalendar;
 import com.EmpTimeHub.entity.User;
 import com.EmpTimeHub.exceptions.customExceptions.UserNotFoundException;
 import com.EmpTimeHub.repository.*;
@@ -47,7 +47,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     private final EmployeeRepository employeeRepository;
     private final AdminRepository adminRepository;
     private final MailService mailService;
-    private final HolidayRepository holidayRepository;
+    private final HolidayCalendarRepository holidayRepository;
     @Autowired
     private NotificationService notificationService;
 
@@ -118,6 +118,9 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .partialDay(partialDay)
                 .holidays(totalHolidays)
                 .leaveDuration(leaveDuration)
+                .withdrawn(false)
+                .policyViolation(false)
+                .noticePeriodViolation(false)
                 .build();
 
         EmployeeLeave savedLeave = leaveRepository.save(leave);
@@ -784,9 +787,9 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         }
 
         // Fetch holidays in the given date range
-        List<Holiday> holidaysList = holidayRepository.findByHolidayDateBetween(fromDate, endDate);
+        List<HolidayCalendar> holidaysList = holidayRepository.findByHolidayDateBetween(fromDate, endDate);
         Set<LocalDate> holidaysSet = holidaysList.stream()
-                .map(Holiday::getHolidayDate)
+                .map(HolidayCalendar::getHolidayDate)
                 .collect(Collectors.toSet());
         int holidays = holidaysSet.size();
         log.debug("Number of holidays between {} and {}: {}", fromDate, endDate, holidays);
@@ -859,6 +862,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .holidays(leave.getHolidays())
                 .status(leave.getStatus() != null ? leave.getStatus().name() : null)
                 .managerComment(leave.getManagerComment())
+                .attachmentUrl(leave.getAttachmentUrl())
                 .build();
     }
     /**
@@ -953,9 +957,12 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                     ManagerLeaveDashboardDTO dto = ManagerLeaveDashboardDTO.builder()
                             .leaveId(el.getLeaveId())
                             .employeeName(el.getEmployee().getFirstName() + " " + el.getEmployee().getLastName())
-                            .leaveType(el.getLeaveCategory().name())
+                            .leaveCategory(el.getLeaveCategory().name())
+                            .financialType(el.getFinancialType().name())
+                            .fromDate(el.getFromDate())
+                            .toDate(el.getToDate())
                             .leaveDuration(el.getLeaveDuration())
-                            .reason(el.getContext())
+                            .context(el.getContext())
                             .attachmentUrl(el.getAttachmentUrl())
                             .remainingLeaves(el.getEmployee().getAvailableLeaves())
                             .status(el.getStatus().name())

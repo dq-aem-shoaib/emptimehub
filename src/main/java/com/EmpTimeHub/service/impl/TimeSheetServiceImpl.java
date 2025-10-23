@@ -10,6 +10,7 @@ import com.EmpTimeHub.repository.EmployeeRepository;
 import com.EmpTimeHub.repository.ProjectRepository;
 import com.EmpTimeHub.repository.TimeSheetRepository;
 import com.EmpTimeHub.repository.UserRepository;
+import com.EmpTimeHub.service.MailService;
 import com.EmpTimeHub.service.TimeSheetService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -19,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -42,17 +43,18 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     private final EmployeeRepository employeeRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final MailService mailService;
 
     /**
      * Creates a new timesheet entry for the logged-in employee.
      *
-     * @param timeSheet          TimeSheetModel containing timesheet details
-     * @param loggedInUserEmail  Logged-in employee's company email
+     * @param timeSheetModels  TimeSheetModel containing timesheet details
+     * @param loggedInUserEmail Logged-in employee's company email
      * @return The created {@link TimeSheet} entity
      * @throws UserNotFoundException if user email does not match company email
      */
     @Override
-    public TimeSheet createTimeSheet(TimeSheetModel timeSheet, String loggedInUserEmail) {
+    public List<TimeSheet> createTimeSheet(List<TimeSheetModel> timeSheetModels, String loggedInUserEmail) {
         LOG.info("Creating timesheet for user: {}", loggedInUserEmail);
 
         Employee emp = employeeRepository.getEmployeeByEmail(loggedInUserEmail);
@@ -68,38 +70,45 @@ public class TimeSheetServiceImpl implements TimeSheetService {
 
         Client client = emp.getClient();
         Project project = projectRepository.findByEmployeeAndClient(emp, client);
-        LocalDate currentDate = timeSheet.getWorkDate();
+
+        List<TimeSheet> timeSheetsToSave = new ArrayList<>();
         LocalDate projectStart = project.getStartDate();
         LocalDate projectEnd = project.getEndDate();
+
+        for (TimeSheetModel timeSheetModel : timeSheetModels) {
+            LocalDate currentDate = timeSheetModel.getWorkDate();
+
+            if (currentDate.isBefore(projectStart) || currentDate.isAfter(projectEnd)) {
+                LOG.error("Work date [{}] not within project duration [{} - {}]", currentDate, projectStart, projectEnd);
+                throw new RuntimeException("Your project work date must " +
+                        "be within start["+projectStart+"] and end date["+projectEnd+"] range!");
+            }
 
         LOG.debug("Validating work date [{}] between project start [{}] and end [{}]",
                 currentDate, projectStart, projectEnd);
 
-        if (currentDate.isBefore(projectStart) || currentDate.isAfter(projectEnd)) {
-            LOG.error("Work date [{}] not within project duration [{} - {}]", currentDate, projectStart, projectEnd);
-            throw new RuntimeException("Your project work date must " +
-                    "be within start["+projectStart+"] and end date["+projectEnd+"] range!");
+            TimeSheet sheet = TimeSheet.builder()
+                    .employee(emp)
+                    .client(client)
+                    .hoursWorked(timeSheetModel.getHoursWorked())
+                    .workDate(timeSheetModel.getWorkDate())
+                    .taskName(timeSheetModel.getTaskName())
+                    .taskDescription(timeSheetModel.getTaskDescription())
+                    .status(EnumConstants.WorkRequest.SUBMITTED.name())
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            timeSheetsToSave.add(sheet);
         }
 
-        TimeSheet sheet = TimeSheet.builder()
-                .employee(emp)
-                .client(client)
-                .hoursWorked(timeSheet.getHoursWorked())
-                .workDate(timeSheet.getWorkDate())
-                .taskName(timeSheet.getTaskName())
-                .taskDescription(timeSheet.getTaskDescription())
-                .status(timeSheet.getStatus())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
         projectRepository.save(project);
-        TimeSheet savedSheet = timeSheetRepository.save(sheet);
+        List<TimeSheet> savedSheets = timeSheetRepository.saveAll(timeSheetsToSave);
+        List<UUID> ids = savedSheets.stream().map(TimeSheet::getTimesheetId).toList();
+        LOG.info("Timesheets created successfully for employee: {}, timesheetId: {}, total timesheets: {} ",
+                emp.getEmployeeId(), ids, savedSheets.size());
 
-        LOG.info("Timesheet created successfully for employee: {}, timesheetId: {}",
-                emp.getEmployeeId(), savedSheet.getTimesheetId());
-
-        return savedSheet;
+        return savedSheets.isEmpty() ? null : savedSheets;
     }
 
     /**
@@ -309,5 +318,25 @@ public class TimeSheetServiceImpl implements TimeSheetService {
         } else {
             LOG.warn("Delete operation skipped: Role [{}] is not authorized", emp.getUser().getRole());
         }
+    }
+
+    @Override
+    public void requestToManager(String loggedInEmail) {
+
+        Employee employee = employeeRepository.getEmployeeByEmail(loggedInEmail);
+        Employee manager = employeeRepository.findByIdWithManager(employee.getEmployeeId())
+                .map(emp -> {
+                    if (emp.getReportingManager() == null) {
+                        throw new UserNotFoundException("Manager not found for employee: " + emp.getEmployeeId());
+                    }
+                    return emp.getReportingManager();
+                })
+                .orElseThrow(() -> new UserNotFoundException("Employee not found with ID: " + employee.getEmployeeId()));
+
+        String approvalMessage = "<h3>Please approve TimeSheets for past 5 or 7 days,having employee-id: "+employee.getCompanyId()
+                +".</h3>\n <h4>follow link below:<h/4>\n"
+                +"<a href=\"https://192.168.1.19:8081/web/api/v1/employee/manager/timesheet\">Approve TimeSheets</a>";
+        mailService.sendMail(manager.getCompanyEmail(),approvalMessage);
+
     }
 }

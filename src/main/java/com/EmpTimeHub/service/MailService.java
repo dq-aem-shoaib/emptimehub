@@ -14,6 +14,8 @@ public interface MailService {
      * @param to      Recipient's email address.
      * @param subject Subject of the email.
      * @param body    Body content of the email.
+     * @param name    Name of the sender (used in the email body or signature).
      */
-    void sendMail(String from, String to, String subject, String body, MultipartFile attachment);
+    void sendMail(String from, String to, String subject, String body, MultipartFile multipartFile);
+    void sendMail(String to, String body);
 }

@@ -30,13 +30,16 @@ public class EnumConstants {
     }
 
     public enum WorkRequest{
-        SUBMITED,APPROVED,PENDING,REJECTED;
+        SUBMITTED,APPROVED,PENDING,REJECTED;
     }
 
     public enum HolidayType {
-        PUBLIC, RELIGIOUS, COMPANY
+        PUBLIC, RELIGIOUS, REGIONAL, COMPANY_SPECIFIC
     }
 
+    public enum RecurrenceRule{
+        ANNUAL, ONE_TIME;
+    }
     public enum PaymentStatus {
         PAID,
         UNPAID
