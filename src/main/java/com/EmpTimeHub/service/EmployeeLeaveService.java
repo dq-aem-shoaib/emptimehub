@@ -111,4 +111,12 @@ public interface EmployeeLeaveService {
      * @return list of {@link ManagerLeaveDashboardDTO} representing pending leaves
      */
     List<ManagerLeaveDashboardDTO> getPendingLeavesForManager(String mangerCompanyMail);
+
+    /**
+     * Get all approved leaves of an employee for the current year.
+     *
+     * @param companyMail the logged-in employee's company email
+     * @return list of EmployeeLeaveDayDTO containing each leave day and its duration
+     */
+    List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail);
 }

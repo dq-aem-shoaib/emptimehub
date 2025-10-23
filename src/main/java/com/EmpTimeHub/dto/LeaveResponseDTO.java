@@ -27,4 +27,5 @@ public class LeaveResponseDTO {
     private String managerComment;
     private int holidays;
     private Double leaveDuration;
+    private String attachmentUrl;
 }
