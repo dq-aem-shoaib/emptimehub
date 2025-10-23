@@ -30,10 +30,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -794,6 +791,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         int holidays = holidaysSet.size();
         log.debug("Number of holidays between {} and {}: {}", fromDate, endDate, holidays);
 
+        Set<LocalDate> nonWorkingDays = new HashSet<>(holidaysSet);
         // Count weekends
         int weekendCount = 0;
         LocalDate date = fromDate;
@@ -801,6 +799,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             DayOfWeek day = date.getDayOfWeek();
             if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
                 weekendCount++;
+                nonWorkingDays.add(date);
             }
             date = date.plusDays(1);
         }
@@ -808,7 +807,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         // Calculate totals
         int totalDays = (int) ChronoUnit.DAYS.between(fromDate, endDate) + 1;
-        int totalHolidays = holidays + weekendCount;
+        int totalHolidays = nonWorkingDays.size();
         Double leaveDuration = (double) (totalDays - totalHolidays);
 
         Boolean partialDay = Boolean.TRUE.equals(request.getPartialDay());
