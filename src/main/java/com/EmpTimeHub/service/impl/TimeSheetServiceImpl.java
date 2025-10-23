@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,8 +45,6 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     private final EmployeeRepository employeeRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final MailService mailService;
-    private final NotificationService notificationService;
 
     /**
      * Creates a new timesheet entry for the logged-in employee.
@@ -323,7 +322,7 @@ public class TimeSheetServiceImpl implements TimeSheetService {
     }
 
     @Override
-    public void requestToManager(UUID timesheetId, String loggedInEmail) {
+    public void requestToManager(String loggedInEmail) {
 
         Employee employee = employeeRepository.getEmployeeByEmail(loggedInEmail);
         Employee manager = employeeRepository.findByIdWithManager(employee.getEmployeeId())

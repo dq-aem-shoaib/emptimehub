@@ -22,7 +22,6 @@ public class LeaveRequestDTO {
     private Double leaveDuration;
     private LocalDate fromDate;
     private LocalDate toDate;
-    private String subject;
     private String context;
     private MultipartFile attachmentFile;
 }

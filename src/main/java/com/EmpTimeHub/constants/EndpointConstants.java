@@ -1,5 +1,7 @@
 package com.EmpTimeHub.constants;
 
+import static com.EmpTimeHub.constants.EnumConstants.DayType.HOLIDAY;
+
 public class EndpointConstants {
 
     /**
@@ -76,7 +78,7 @@ public class EndpointConstants {
     public static final String EMPLOYEE_TIMESHEET_REGISTER = EMPLOYEE_API + "/timesheet/register";
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
-    public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/final/submit";
+    public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/approvaltomanager";
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
@@ -84,15 +86,34 @@ public class EndpointConstants {
     public static final String  EMPLOYEE_LEAVE_AVAILABILTY=EMPLOYEE_API+"/leave"+"/checkLeaveAvailability";
     public static final String  EMPLOYEE_PENDING_LEAVES=EMPLOYEE_API+"/leave"+"/pendingLeaves";
     public static final String  EMPLOYEE_LEAVE_STATUS_UPDATE=EMPLOYEE_API+"/leave"+"/updateStatus"+"/{leaveId}";
-//common api for admin and employee
-    public static final String COMMON_API = WEB_API_PREFIX + "/common";
-    public static final String LEAVE_SUMMARY = COMMON_API + "/leave-summary";
-
     public static final String EMPLOYEE_WORKDAYS = EMPLOYEE_API + "/workDays";
+    public static final String EMPLOYEE_APPROVED_LEAVES = EMPLOYEE_API + "/approved/leaves";
+
     //common api for admin and employee
+    public static final String LEAVE_SUMMARY = EMPLOYEE_API + "/leave-summary";
     public static final String EMPLOYEE_VIEW = EMPLOYEE_API + VIEW ;
     public static final String EMPLOYEE_UPDATE = EMPLOYEE_API + UPDATE ;
     public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
+
+    // HolidayCalender and scheme
+    public static final String HOLIDAYS = WEB_API_PREFIX + "/holidays";
+    public static final String HOLIDAYS_CALENDAR_REGISTER = HOLIDAYS + "/calendar/register";
+    public static final String HOLIDAYS_CALENDAR_VIEW_ALL = HOLIDAYS + VIEW + "/calendar";
+    public static final String HOLIDAYS_CALENDAR_VIEW_ID = HOLIDAYS + VIEW + "/calendar/{id}";
+    public static final String HOLIDAYS_CALENDAR_UPDATE = HOLIDAYS  + "/calendar" + UPDATE + "/{id}";
+    public static final String HOLIDAYS_CALENDAR_DELETE = HOLIDAYS + "/calendar/delete";
+    public static final String HOLIDAYS_SCHEME_REGISTER = HOLIDAYS + "/scheme/register";
+    public static final String HOLIDAYS_SCHEME_VIEW_ALL = HOLIDAYS + VIEW + "/scheme";
+    public static final String HOLIDAYS_SCHEME_VIEW_ID = HOLIDAYS + VIEW + "/scheme/{id}";
+    public static final String HOLIDAYS_SCHEME_UPDATE = HOLIDAYS  + "/scheme" + UPDATE + "/{id}";
+    public static final String HOLIDAYS_SCHEME_DELETE = HOLIDAYS + "/scheme/delete";
+   //  Notification Related EndPoints
+
+    public static final String NOTIFICATION_API = WEB_API_PREFIX + "/notification";
+    public static final String GET_NOTIFICATIONS = NOTIFICATION_API+"/getAllNotifications";
+    public static final String READ_NOTIFICATION = NOTIFICATION_API+"/read";
+    public static final String CLEAR_ALL_NOTIFICATIONS = NOTIFICATION_API+"/clearAll";
+    public static final String CLEAR_NOTIFICATION = NOTIFICATION_API+"/clear";
 
 }
