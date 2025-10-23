@@ -18,5 +18,5 @@ public interface TimeSheetService {
     void updateTimeSheet(UUID timesheetId,TimeSheetModel updatedSheet, String loggedInUserEmail);
     TimeSheet updateStatus(UUID timesheetId, String status);
     void deleteTimeSheet(UUID timesheetId, String loggedInUserEmail);
-    void requestToManager(String loggedInEmail);
+    void requestToManager(UUID timesheetId, String loggedInEmail);
 }

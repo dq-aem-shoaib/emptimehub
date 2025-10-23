@@ -109,10 +109,11 @@ public class EmployeeTimesheetController {
     @PreAuthorize("hasRole('EMPLOYEE')")
     @GetMapping(EMPLOYEE_TIMESHEET_MANAGER_REQUEST)
     public ResponseEntity<WebResponseDTO<String>> requestSendToManager(
+            @RequestParam UUID id,
             @AuthenticationPrincipal UserDetails userDetails
     ){
 
-        timeSheetService.requestToManager(userDetails.getUsername());
+        timeSheetService.requestToManager(id, userDetails.getUsername());
         return new ResponseEntity<WebResponseDTO<String>>(
                 new WebResponseDTO<>(true, "Successfully send to Manager"),HttpStatus.OK);
     }
