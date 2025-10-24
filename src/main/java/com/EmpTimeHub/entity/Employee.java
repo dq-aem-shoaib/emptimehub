@@ -126,30 +126,23 @@ public class Employee {
     @Column(name = "aadhar_number", length = 20)
     private String aadharNumber;
 
-    // File URLs for documents
     @Column(name = "employee_photo_url", length = 255)
     private String employeePhotoUrl;
 
-    @Column(name = "pan_card_url", length = 255)
-    private String panCardUrl;
+    @Column(name = "nationality", length = 50)
+    private String nationality;
 
-    @Column(name = "aadhar_card_url", length = 255)
-    private String aadharCardUrl;
+    @Column(name = "emergency_contact_name", length = 100)
+    private String emergencyContactName;
 
-    @Column(name = "bank_passbook_url", length = 255)
-    private String bankPassbookUrl;
+    @Column(name = "emergency_contact_number", length = 20)
+    private String emergencyContactNumber;
 
-    @Column(name = "tenth_cft_url", length = 255)
-    private String tenthCftUrl;
+    @Column(name = "remarks", length = 200)
+    private String remarks;
 
-    @Column(name = "inter_cft_url", length = 255)
-    private String interCftUrl;
-
-    @Column(name = "degree_cft_url", length = 255)
-    private String degreeCftUrl;
-
-    @Column(name = "post_graduation_cft_url", length = 255)
-    private String postGraduationCftUrl;
+    @Column(name = "skills_and_certification", length = 100)
+    private String skillsAndCertification;
 
     @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE"; // ACTIVE | INACTIVE

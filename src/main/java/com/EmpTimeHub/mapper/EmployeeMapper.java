@@ -1,17 +1,17 @@
 package com.EmpTimeHub.mapper;
 
 import com.EmpTimeHub.dto.EmployeeDTO;
+import com.EmpTimeHub.dto.EmployeeDocumentDTO;
+import com.EmpTimeHub.entity.*;
 import com.EmpTimeHub.model.AddressModel;
 import com.EmpTimeHub.model.EmployeeModel;
-import com.EmpTimeHub.entity.Employee;
-import com.EmpTimeHub.entity.Client;
-import com.EmpTimeHub.entity.BankDetails;
-import com.EmpTimeHub.entity.User;
 import com.EmpTimeHub.constants.EnumConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.BeanUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class EmployeeMapper {
@@ -37,6 +37,9 @@ public class EmployeeMapper {
                 .companyEmail(model.getCompanyEmail())
                 .contactNumber(model.getContactNumber())
                 .alternateContactNumber(model.getAlternateContactNumber())
+                .nationality(model.getNationality())
+                .emergencyContactName(model.getEmergencyContactName())
+                .emergencyContactNumber(model.getEmergencyContactNumber())
                 .gender(model.getGender())
                 .maritalStatus(model.getMaritalStatus())
                 .numberOfChildren(model.getNumberOfChildren())
@@ -45,16 +48,11 @@ public class EmployeeMapper {
                 .dateOfJoining(model.getDateOfJoining())
                 .designation(model.getDesignation())
                 .rateCard(model.getRateCard())
+                .remarks(model.getRemarks())
+                .skillsAndCertification(model.getSkillsAndCertification())
                 .panNumber(model.getPanNumber())
                 .aadharNumber(model.getAadharNumber())
                 .availableLeaves(12D)
-                .panCardUrl(model.getPanCardUrl())
-                .aadharCardUrl(model.getAadharCardUrl())
-                .bankPassbookUrl(model.getBankPassbookUrl())
-                .tenthCftUrl(model.getTenthCftUrl())
-                .interCftUrl(model.getInterCftUrl())
-                .degreeCftUrl(model.getDegreeCftUrl())
-                .postGraduationCftUrl(model.getPostGraduationCftUrl())
                 .companyId(companyId)
                 .status("ACTIVE")
                 .build();
@@ -63,7 +61,7 @@ public class EmployeeMapper {
     /**
      * Convert Employee entity → EmployeeDTO
      */
-    public EmployeeDTO toDTO(Employee employee, List<AddressModel> addresses) {
+    public EmployeeDTO toDTO(Employee employee, List<AddressModel> addresses , List<EmployeeDocument> documents) {
         EmployeeDTO dto = new EmployeeDTO();
         BeanUtils.copyProperties(employee, dto);
 
@@ -90,6 +88,22 @@ public class EmployeeMapper {
             dto.setIfscCode(employee.getBankDetails().getIfscCode());
             dto.setBranchName(employee.getBankDetails().getBranchName());
         }
+
+        // ---------- Documents ----------
+        List<EmployeeDocumentDTO> documentDTOs = documents == null
+                ? Collections.emptyList()
+                : documents.stream()
+                .map(doc -> EmployeeDocumentDTO.builder()
+                        .documentId(doc.getDocumentId())
+                        .fileUrl(doc.getFileUrl())
+                        .docType(doc.getDocType())
+                        .build())
+                .collect(Collectors.toList());
+
+        dto.setDocuments(documentDTOs);
+
+
+
 
         return dto;
     }
