@@ -11,4 +11,8 @@ public interface AddressService {
     @Transactional
     void addAddresses(String entityType, UUID entityId, List<AddressModel> addresses);
     List<AddressModel> getAddressesForEntity(String entityType, UUID entityId);
+
+     void updateAddresses(UUID employeeId, List<AddressModel> addressModels) ;
+
+     void deleteAddress(UUID employeeId, UUID addressId);
 }
