@@ -1,0 +1,136 @@
+mail:
+  templates:
+    LEAVE_SUBMITTED_MANAGER: |
+      Dear %s,
+
+      This is an automated notification from the Leave Management System.
+
+      A new leave request has been submitted by %s (%s) for your review.
+
+      Leave Details:
+
+      Leave Type: %s
+      Start Date: %s
+      End Date: %s
+      Total Days: %.1f
+      Holidays: %d
+      Reason: %s
+
+      Please log in to the Leave Management Portal to approve or reject this request:
+
+      [Approval Link or Portal URL]
+      %s
+      Thank you,
+      Leave Management System
+
+    LEAVE_SUBMITTED_EMPLOYEE: |
+      Dear %s,
+
+      This is to confirm that your leave request has been successfully submitted through the Leave Management System.
+
+      Below are the details of your request:
+
+      Employee ID: %s
+      Designation: %s
+      Leave Type: %s
+      Start Date: %s
+      End Date: %s
+      Total Days: %.1f
+      Reason: %s
+
+      Your request has been sent to your reporting manager %s for review and approval.
+
+      You will receive a separate email once your leave request has been approved or declined.
+
+      You can track the status of your request anytime from the Leave Management Portal:
+
+      [Portal Link]
+      %s
+      Thank you,
+      Leave Management System
+
+    LEAVE_UPDATED_MANAGER: |
+      Dear %s,
+
+      This is an automated notification from the Leave Management System.
+
+      The leave request submitted by %s (%s) has been updated. Please review the updated details below:
+
+      Leave Details:
+
+      Leave Type: %s
+      Start Date: %s
+      End Date: %s
+      Total Days: %.1f
+      Holidays: %d
+      Reason/Context: %s
+
+      Please log in to the Leave Management Portal to approve or reject this request:
+
+      [Approval Link or Portal URL]
+      %s
+      Thank you,
+      Leave Management System
+
+    LEAVE_UPDATED_EMPLOYEE: |
+      Dear %s,
+
+      Your leave request has been updated successfully in the Leave Management System.
+
+      Updated Leave Details:
+
+      Leave Type: %s
+      Start Date: %s
+      End Date: %s
+      Total Days: %.1f
+      Holidays: %d
+      Reason/Context: %s
+
+      Your request has been sent to your reporting manager %s for review.
+
+      You can track the status of your leave anytime from the Leave Management Portal:
+
+      [Portal Link]
+      %s
+      Thank you,
+      Leave Management System
+
+    LEAVE_APPROVED: |
+      Dear %s,
+
+      Your leave request from %s to %s has been approved by %s.
+
+      Details of your approved leave:
+      Leave Type: %s
+      Total Days: %s
+      Approved By: %s
+      Date of Approval: %s
+
+      Please ensure all pending tasks are completed or delegated before your leave begins.  
+
+      We wish you a restful and refreshing break!
+
+      You can view this approval and related updates through the Leave Management System:
+      %s
+
+      Best regards,
+      Leave Management System
+
+    LEAVE_REJECTED: |
+      Dear %s,
+
+      Your leave request from %s to %s has been reviewed by %s, and we regret to inform you that it could not be approved at this time.
+
+      Details of your leave request:
+      Leave Type: %s
+      Total Days: %s
+      Reviewed By: %s
+      Reason for Rejection: %s
+
+      If appropriate, you may discuss alternate dates or resubmit your leave request through the portal:
+      %s
+
+      Thank you for your understanding.
+
+      Best regards,
+      Leave Management System

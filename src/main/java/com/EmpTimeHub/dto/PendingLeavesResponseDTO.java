@@ -14,12 +14,12 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ManagerLeaveDashboardDTO {
+public class PendingLeavesResponseDTO {
 
     private UUID leaveId;
     private String employeeName;
 
-    private String leaveCategory;
+    private String leaveCategoryTpe;
     private String financialType;
 
     private LocalDate fromDate;

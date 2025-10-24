@@ -4,11 +4,9 @@ import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -108,9 +106,9 @@ public interface EmployeeLeaveService {
      * Retrieves pending leave requests for employees reporting to the specified manager.
      *
      * @param mangerCompanyMail the company email of the manager
-     * @return list of {@link ManagerLeaveDashboardDTO} representing pending leaves
+     * @return list of {@link PendingLeavesResponseDTO} representing pending leaves
      */
-    List<ManagerLeaveDashboardDTO> getPendingLeavesForManager(String mangerCompanyMail);
+    List<PendingLeavesResponseDTO> getPendingLeavesForManagerAndAdmin(String mangerCompanyMail);
 
     /**
      * Get all approved leaves of an employee for the current year.
@@ -118,5 +116,5 @@ public interface EmployeeLeaveService {
      * @param companyMail the logged-in employee's company email
      * @return list of EmployeeLeaveDayDTO containing each leave day and its duration
      */
-    List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail);
+    List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail,LocalDate currentYear);
 }
