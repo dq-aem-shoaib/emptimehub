@@ -1,6 +1,9 @@
 package com.EmpTimeHub.model;
 
 import com.EmpTimeHub.constants.EnumConstants;
+import com.EmpTimeHub.dto.*;
+import com.EmpTimeHub.entity.EmployeeStatutoryDetails;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +32,11 @@ public class EmployeeModel implements Serializable {
     private String maritalStatus;
     private Integer numberOfChildren;
     private String employeePhotoUrl;
+    private String nationality;
+    private String emergencyContactName;
+    private String emergencyContactNumber;
+    private String remarks;
+    private String skillsAndCertification;
 
     // ---------- Associations ----------
     private UUID clientId;
@@ -53,16 +61,22 @@ public class EmployeeModel implements Serializable {
     private String branchName;
 
     // ---------- Address ----------
-    private List<AddressModel> addresses; // correct type
+    private List<AddressModel> addresses;
+
+    //--------------- Documents------------------
+    private List<EmployeeDocumentDTO> documents;
+
+    private EmployeeSalaryDTO employeeSalaryDTO;
 
 
-    // ---------- Document URLs ----------
-    private String panCardUrl;
-    private String aadharCardUrl;
-    private String bankPassbookUrl;
-    private String tenthCftUrl;
-    private String interCftUrl;
-    private String degreeCftUrl;
-    private String postGraduationCftUrl;
+    private EmployeeAdditionalDetailsDTO employeeAdditionalDetailsDTO;
+
+    private EmployeeEmploymentDetailsDTO employeeEmploymentDetailsDTO;
+
+    private EmployeeInsuranceDetailsDTO employeeInsuranceDetailsDTO;
+
+    private EmployeeStatutoryDetailsDTO employeeStatutoryDetailsDTO;
+
+    private EmployeeEquipmentDTO employeeEquipmentDTO;
 
 }

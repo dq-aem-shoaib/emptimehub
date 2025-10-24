@@ -86,4 +86,13 @@ public class EnumConstants {
         LEAVE_REJECTED;
     }
 
+
+    public enum DocumentType {
+        OFFER_LETTER,
+        CONTRACT,
+        TAX_DECLARATION_FORM,
+        WORK_PERMIT,
+        OTHER
+    }
+
 }

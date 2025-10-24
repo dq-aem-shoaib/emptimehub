@@ -1,0 +1,2 @@
+ALTER TABLE employee_additional_details
+RENAME COLUMN hr_admin_id TO additional_details_id;

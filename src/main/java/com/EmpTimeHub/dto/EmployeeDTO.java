@@ -33,6 +33,11 @@ public class EmployeeDTO {
     private Integer numberOfChildren;
     private LocalDate dateOfBirth;
     private String employeePhotoUrl;
+    private String nationality;
+    private String emergencyContactName;
+    private String emergencyContactNumber;
+    private String remarks;
+    private String skillsAndCertification;
 
     // ---------- Job Info ----------
     private String designation;
@@ -61,18 +66,27 @@ public class EmployeeDTO {
     private String reportingManagerName;
 
     // ---------- Document URLs ----------
-    private String panCardUrl;
-    private String aadharCardUrl;
-    private String bankPassbookUrl;
-    private String tenthCftUrl;
-    private String interCftUrl;
-    private String degreeCftUrl;
-    private String postGraduationCftUrl;
 
+    private List<EmployeeDocumentDTO> documents;
+
+    // ---------- Addresses  ----------
     private List<AddressModel> addresses;
+
+    // ---------- Salary details  ----------
+    private EmployeeSalaryDTO employeeSalaryDTO;
+
+    private EmployeeAdditionalDetailsDTO employeeAdditionalDetailsDTO;
+
+    private EmployeeEmploymentDetailsDTO employeeEmploymentDetailsDTO;
+
+    private EmployeeInsuranceDetailsDTO employeeInsuranceDetailsDTO;
+
+    private List<EmployeeEquipmentDTO> employeeEquipmentDTO;
+
+    private EmployeeStatutoryDetailsDTO employeeStatutoryDetailsDTO;
 
     // ---------- Status ----------
     private String status;
-    private LocalDateTime createdAt;         // ✅ Added
-    private LocalDateTime updatedAt;         // ✅ Added
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

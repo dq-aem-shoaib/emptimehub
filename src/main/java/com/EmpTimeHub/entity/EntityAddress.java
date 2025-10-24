@@ -1,8 +1,10 @@
 package com.EmpTimeHub.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.util.UUID;
@@ -10,6 +12,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "entity_address")
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class EntityAddress {
     @Id
     @GeneratedValue(generator = "uuid2")
