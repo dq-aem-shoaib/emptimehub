@@ -250,7 +250,7 @@ public class EmployeeLeaveController {
      * @return {@link WebResponseDTO} containing the updated leave details in a {@link LeaveResponseDTO}
      */
     @PutMapping(EMPLOYEE_LEAVE_STATUS_UPDATE)
-    @PreAuthorize("hasAnyRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER') OR hasAnyRole('ADMIN')")
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> updateLeaveStatus(
             @PathVariable UUID leaveId,
             @RequestParam EnumConstants.LeaveStatus status,
@@ -317,17 +317,17 @@ public class EmployeeLeaveController {
      * @return WebResponseDTO containing list of pending leaves for manager's employees
      */
     @GetMapping(EMPLOYEE_PENDING_LEAVES)
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<WebResponseDTO<List<ManagerLeaveDashboardDTO>>> getPendingLeaves(
+    @PreAuthorize("hasRole('MANAGER') OR hasRole('ADMIN')")
+    public ResponseEntity<WebResponseDTO<List<PendingLeavesResponseDTO>>> getPendingLeaves(
             @AuthenticationPrincipal UserDetails loggedInUser
     ) {
         log.info("Fetching pending leaves for manager email={}", loggedInUser.getUsername());
 
-        List<ManagerLeaveDashboardDTO> pendingLeaves = leaveService.getPendingLeavesForManager(loggedInUser.getUsername());
+        List<PendingLeavesResponseDTO> pendingLeaves = leaveService.getPendingLeavesForManagerAndAdmin(loggedInUser.getUsername());
 
         log.info("Found {} pending leave(s) for manager email={}", pendingLeaves.size(), loggedInUser.getUsername());
 
-        WebResponseDTO<List<ManagerLeaveDashboardDTO>> response = WebResponseDTO.<List<ManagerLeaveDashboardDTO>>builder()
+        WebResponseDTO<List<PendingLeavesResponseDTO>> response = WebResponseDTO.<List<PendingLeavesResponseDTO>>builder()
                 .flag(true)
                 .status(200)
                 .message("Pending leaves fetched successfully")
@@ -347,14 +347,14 @@ public class EmployeeLeaveController {
      * @return ResponseEntity with WebResponseDTO containing list of EmployeeLeaveDayDTO
      */
     @GetMapping(EMPLOYEE_APPROVED_LEAVES)
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE') OR hasRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<List<EmployeeLeaveDayDTO>>> getApprovedLeavesForCurrentYear(
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails,LocalDate currentYear) {
 
         String companyMail = userDetails.getUsername();
         log.info("Received request to fetch approved leaves for: {}", companyMail);
 
-        List<EmployeeLeaveDayDTO> leaveDays = leaveService.getApprovedLeavesForCurrentYear(companyMail);
+        List<EmployeeLeaveDayDTO> leaveDays = leaveService.getApprovedLeavesForCurrentYear(companyMail,currentYear);
 
         log.info("Returning {} leave day entries for employee: {}", leaveDays.size(), companyMail);
 

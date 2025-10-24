@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: classpath:email-templates.yml
   application:
     name: EmpTimeHub
   profiles:

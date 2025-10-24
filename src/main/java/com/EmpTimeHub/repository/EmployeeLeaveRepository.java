@@ -51,5 +51,14 @@ public interface EmployeeLeaveRepository extends JpaRepository<EmployeeLeave, UU
             LocalDate endDate
     );
 
+    /**
+     * Finds all leave records matching the given status.
+     * Used mainly by admin to fetch all pending, approved, or rejected leaves.
+     *
+     * @param status the leave status to filter by
+     * @return list of leaves with the specified status
+     */
+    List<EmployeeLeave> findByStatus(EnumConstants.LeaveStatus status);
+
 }
 
