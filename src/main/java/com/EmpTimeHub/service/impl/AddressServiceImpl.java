@@ -1,5 +1,6 @@
 package com.EmpTimeHub.service.impl;
 
+import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.entity.*;
 import com.EmpTimeHub.model.AddressModel;
 import com.EmpTimeHub.repository.*;
@@ -21,6 +22,7 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
     private final EntityAddressRepository entityAddressRepository;
+    private final EmployeeRepository employeeRepository;
 
 
 
@@ -50,6 +52,7 @@ public class AddressServiceImpl implements AddressService {
                 .map(entityAddress -> {
                     Address address = entityAddress.getAddress();
                     AddressModel model = new AddressModel();
+                    model.setAddressId(address.getAddressId());
                     model.setHouseNo(address.getHouseNo());
                     model.setStreetName(address.getStreetName());
                     model.setCity(address.getCity());
@@ -61,5 +64,91 @@ public class AddressServiceImpl implements AddressService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void updateAddresses(UUID employeeId, List<AddressModel> addressModels) {
+
+        employeeRepository.findById(employeeId).orElseThrow(()-> new RuntimeException("Employee not found"));
+
+        if (addressModels == null || addressModels.isEmpty()) {
+            return; // nothing to update
+        }
+
+        for (AddressModel addressModel : addressModels) {
+            if (addressModel.getAddressId() != null) {
+                // Existing address → update
+                Address existingAddress = addressRepository.findById(addressModel.getAddressId())
+                        .orElseThrow(() -> new RuntimeException("Address not found"));
+
+                entityAddressRepository.findByAddress(existingAddress)
+                                .orElseThrow(() -> new RuntimeException("entity address not found"));
+
+
+                updateIfNotNull(addressModel.getHouseNo(), existingAddress::setHouseNo);
+                updateIfNotNull(addressModel.getStreetName(), existingAddress::setStreetName);
+                updateIfNotNull(addressModel.getCity(), existingAddress::setCity);
+                updateIfNotNull(addressModel.getCountry(), existingAddress::setCountry);
+                updateIfNotNull(addressModel.getPincode(), existingAddress::setPincode);
+
+                // Save updates
+                existingAddress.setUpdatedAt(java.time.LocalDateTime.now());
+                addressRepository.save(existingAddress);
+            } else {
+                // New address → add
+                Address newAddress = Address.builder()
+                        .houseNo(addressModel.getHouseNo())
+                        .streetName(addressModel.getStreetName())
+                        .city(addressModel.getCity())
+                        .state(addressModel.getState())
+                        .country(addressModel.getCountry())
+                        .pincode(addressModel.getPincode())
+                        .createdAt(java.time.LocalDateTime.now())
+                        .updatedAt(java.time.LocalDateTime.now())
+                        .build();
+
+                addressRepository.save(newAddress);
+
+                // Link employee and address (assuming you use an entity like EntityAddress)
+                EntityAddress entityAddress = EntityAddress.builder()
+                        .entityId(employeeId)
+                        .address(newAddress)
+                        .addressType(addressModel.getAddressType())
+                        .entityType(EnumConstants.EntityType.EMPLOYEE.getValue())
+                        .build();
+                entityAddressRepository.save(entityAddress);
+            }
+        }
+    }
+
+    @Override
+    public void deleteAddress(UUID employeeId, UUID addressId) {
+        // Fetch the address
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        // Fetch the entity-address mapping and verify ownership
+        EntityAddress entityAddress = entityAddressRepository.findByAddress(address)
+                .orElseThrow(() -> new RuntimeException("EntityAddress not found"));
+
+        if (!entityAddress.getEntityId().equals(employeeId) ||
+                !entityAddress.getEntityType().equals(EnumConstants.EntityType.EMPLOYEE.getValue())) {
+            throw new RuntimeException("This address does not belong to the specified employee");
+        }
+
+        // Delete mapping first
+        entityAddressRepository.delete(entityAddress);
+
+        // Delete actual address
+        addressRepository.delete(address);
+    }
+
+
+    private <T> void updateIfNotNull(T value, java.util.function.Consumer<T> setter) {
+        if (value != null) setter.accept(value);
+    }
+
+
+
+
 }
 

@@ -77,4 +77,14 @@ public class EnumConstants {
 
     }
 
+
+    public enum DocumentType {
+        OFFER_LETTER,
+        CONTRACT,
+        TAX_DECLARATION_FORM,
+        WORK_PERMIT,
+        OTHER
+    }
+
+
 }
