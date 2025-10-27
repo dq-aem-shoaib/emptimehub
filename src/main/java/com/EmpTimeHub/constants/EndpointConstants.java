@@ -79,6 +79,8 @@ public class EndpointConstants {
     public static final String EMPLOYEE_TIMESHEET_UPDATE = EMPLOYEE_API + "/timesheet/update";
     public static final String EMPLOYEE_TIMESHEET_DELETE = EMPLOYEE_API + "/timesheet/delete";
     public static final String EMPLOYEE_TIMESHEET_MANAGER_REQUEST = EMPLOYEE_API + "/timesheet/approvaltomanager";
+    public static final String EMPLOYEE_TIMESHEET_APPROVE_BY_MANAGER = EMPLOYEE_API + "/manager/approve";
+    public static final String EMPLOYEE_TIMESHEET_REJECT_BY_MANAGER = EMPLOYEE_API + "/manager/reject";
     public static final String EMPLOYEE_LEAVE_REQUEST=EMPLOYEE_API+"/leaveApply";
     public static final String  EMPLOYEE_LEAVE_BY_ID=EMPLOYEE_API+VIEW+"/leave"+"/{leaveId}";
     public static final String  EMPLOYEE_LEAVE_UPDATE=EMPLOYEE_API+UPDATE+"/leave";
@@ -115,5 +117,4 @@ public class EndpointConstants {
     public static final String READ_NOTIFICATION = NOTIFICATION_API+"/read";
     public static final String CLEAR_ALL_NOTIFICATIONS = NOTIFICATION_API+"/clearAll";
     public static final String CLEAR_NOTIFICATION = NOTIFICATION_API+"/clear";
-
 }

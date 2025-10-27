@@ -22,7 +22,7 @@ public class TimeSheetResponseDto {
     private BigDecimal workedHours;
     private LocalDate workDate;
     private String taskName;
-    private String taskDescription;
+    private String managerComment;
     private String projectName;
     private LocalDate projectStartedAt;
     private LocalDate projectEndedAt;

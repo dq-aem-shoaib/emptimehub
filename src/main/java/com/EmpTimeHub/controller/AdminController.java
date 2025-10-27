@@ -148,7 +148,7 @@ public class AdminController {
      * @return ResponseEntity containing a list of employee DTOs wrapped in {@link WebResponseDTO}.
      */
     @GetMapping(ADMIN_GET_ALL_EMP)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') OR hasRole('MANAGER')")
     public ResponseEntity<WebResponseDTO<List<EmployeeDTO>>> getAllEmployee() {
 
         List<EmployeeDTO> allEmployee = employeeService.getAllEmployee();
