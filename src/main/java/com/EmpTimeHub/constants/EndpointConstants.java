@@ -44,6 +44,8 @@ public class EndpointConstants {
     public static final String ADMIN_GET_ALL_CLIENT = ADMIN_API + "/client/all";
     public static final String ADMIN_DELETE_EMP = ADMIN_API+"/{empId}";
     public static final String ADMIN_DELETE_CLIENT = ADMIN_API+"/client/{clientId}";
+    public static final String ADMIN_DELETE_EMP_ADDRESS = ADMIN_API+"/delete/employee/{employeeId}/address/{addressId}";
+    public static final String ADMIN_DELETE_EMP_DOCUMENT = ADMIN_API+"/delete/employee/{employeeId}/document/{documentId}";
     public static final String ADMIN_UNASSIGN_CLIENT = ADMIN_API+"/emp/{empId}";
     public static final String ADD_CLIENT_ADDRESS = ADMIN_API+"/client/address/{clientId}";
 
@@ -97,6 +99,11 @@ public class EndpointConstants {
     public static final String EMPLOYEE_UPDATE = EMPLOYEE_API + UPDATE ;
     public static final String EMPLOYEE_ADD_ADDRESS = EMPLOYEE_API + "/add/address";
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
+    //common api for address
+    public static final String EMPLOYEE_ADDRESS_DELETE = EMPLOYEE_API + "/address/delete";
+
+
+
 
     // HolidayCalender and scheme
     public static final String HOLIDAYS = WEB_API_PREFIX + "/holidays";

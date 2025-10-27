@@ -3,45 +3,51 @@ package com.EmpTimeHub.service.impl;
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.EmployeeDTO;
 import com.EmpTimeHub.entity.*;
-import com.EmpTimeHub.generator.CredentialGenerator;
 import com.EmpTimeHub.mapper.EmployeeMapper;
-import com.EmpTimeHub.model.AddressModel;
 import com.EmpTimeHub.model.EmployeeModel;
-import com.EmpTimeHub.repository.*;
-import com.EmpTimeHub.service.AddressService;
-import com.EmpTimeHub.service.EmployeeService;
+import com.EmpTimeHub.repository.EmployeeRepository;
+import com.EmpTimeHub.service.*;
 import com.EmpTimeHub.service.helper.EmployeeServiceHelper;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService {
 
+    // -------------------- Repositories & Helpers --------------------
     private final EmployeeRepository employeeRepository;
-    private final ClientRepository clientRepository;
     private final EmployeeMapper employeeMapper;
     private final EmployeeServiceHelper serviceHelper;
 
+    private final EmployeeSalaryService employeeSalaryService;
+    private final EmployeeEmploymentDetailsService employeeEmploymentDetailsService;
+    private final EmployeeInsuranceDetailsService employeeInsuranceDetailsService;
+    private final EmployeeEquipmentService employeeEquipmentService;
+    private final EmployeeStatutoryDetailsService employeeStatutoryDetailsService;
 
+    // -------------------- Add Employee --------------------
+    /**
+     * Adds a new employee along with all related entities like salary, documents, addresses, etc.
+     *
+     * @param employeeModel the employee input model
+     * @return the saved EmployeeDTO
+     */
     @Transactional
     @Override
     public EmployeeDTO addEmployee(EmployeeModel employeeModel) {
 
-        //  Generate credentials
+        // 1. Generate credentials
         EmployeeServiceHelper.Credentials creds = serviceHelper.generateCredentials();
 
-        //  Save user
+        // 2. Save User entity
         User savedUser = serviceHelper.saveUser(
                 employeeModel.getDesignation(),
                 employeeModel.getCompanyEmail(),
@@ -49,37 +55,99 @@ public class EmployeeServiceImpl implements EmployeeService {
                 creds.getEncryptedPassword()
         );
 
-        //  Fetch related entities
+        // 3. Fetch related entities (Client and Reporting Manager)
         Client client = serviceHelper.getClient(employeeModel.getClientId());
         Employee reportingManager = serviceHelper.getReportingManager(employeeModel.getReportingManagerId());
 
-        //  Build BankDetails
+        // 4. Build BankDetails entity
         BankDetails bankDetails = serviceHelper.buildBankDetails(employeeModel);
 
-        //  Build and save Employee
+        // 5. Map EmployeeModel to Employee entity
         Employee employee = employeeMapper.toEntity(
                 employeeModel, savedUser, client, reportingManager, bankDetails, creds.getCompanyId()
         );
+
         Employee savedEmployee = employeeRepository.save(employee);
 
-        //  Save addresses
-        serviceHelper.saveAddresses(savedEmployee.getEmployeeId(), employeeModel.getAddresses());
+        // 6. Save related entities
+        saveRelatedEntities(savedEmployee, employeeModel);
 
-        //  Convert to DTO and return
+        // 7. Convert to DTO and return
         return serviceHelper.toEmployeeDTO(savedEmployee);
     }
 
+    /**
+     * Saves all related entities of an employee like addresses, documents, salary, and additional details.
+     *
+     * @param savedEmployee the saved Employee entity
+     * @param employeeModel the Employee input model
+     */
+    private void saveRelatedEntities(Employee savedEmployee, EmployeeModel employeeModel) {
 
+        // Save addresses
+        serviceHelper.saveAddresses(savedEmployee.getEmployeeId(), employeeModel.getAddresses());
 
+        // Save documents
+        serviceHelper.processDocument(employeeModel.getDocuments(), savedEmployee.getEmployeeId());
+
+        // Save salary details
+        employeeSalaryService.saveSalaryDetails(employeeModel.getEmployeeSalaryDTO(), savedEmployee);
+
+        // Save optional details
+        if (employeeModel.getEmployeeAdditionalDetailsDTO() != null) {
+            serviceHelper.saveAdditionalDetails(employeeModel.getEmployeeAdditionalDetailsDTO(),
+                    savedEmployee.getEmployeeId());
+        }
+
+        if (employeeModel.getEmployeeEmploymentDetailsDTO() != null) {
+            employeeEmploymentDetailsService.saveEmploymentDetails(
+                    employeeModel.getEmployeeEmploymentDetailsDTO(),
+                    savedEmployee.getEmployeeId()
+            );
+        }
+
+        if (employeeModel.getEmployeeInsuranceDetailsDTO() != null) {
+            employeeInsuranceDetailsService.saveInsuranceDetails(
+                    employeeModel.getEmployeeInsuranceDetailsDTO(),
+                    savedEmployee.getEmployeeId()
+            );
+        }
+
+        if (employeeModel.getEmployeeEquipmentDTO() != null) {
+            employeeEquipmentService.saveEquipment(
+                    employeeModel.getEmployeeEquipmentDTO(),
+                    savedEmployee.getEmployeeId()
+            );
+        }
+
+        if (employeeModel.getEmployeeStatutoryDetailsDTO() != null) {
+            employeeStatutoryDetailsService.saveStatutoryDetails(
+                    employeeModel.getEmployeeStatutoryDetailsDTO(),
+                    savedEmployee.getEmployeeId()
+            );
+        }
+    }
+
+    // -------------------- Get Employee --------------------
+    /**
+     * Fetches an employee by ID.
+     *
+     * @param empId employee UUID
+     * @return EmployeeDTO
+     */
     @Override
     public EmployeeDTO getEmployeeById(UUID empId) {
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Delegate DTO conversion to existing helper
         return serviceHelper.toEmployeeDTO(employee);
     }
 
+    /**
+     * Fetches all employees.
+     *
+     * @return list of EmployeeDTO
+     */
     @Override
     public List<EmployeeDTO> getAllEmployee() {
         return employeeRepository.findAll()
@@ -88,53 +156,79 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .toList();
     }
 
-
+    // -------------------- Update Employee --------------------
+    /**
+     * Updates an employee by ID using values from EmployeeModel.
+     *
+     * @param empId         employee UUID
+     * @param employeeModel input model
+     */
     @Override
     public void updateEmployeeById(UUID empId, EmployeeModel employeeModel) {
         Employee employee = employeeRepository.findById(empId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
-        // Delegate all update logic to serviceHelper
-        serviceHelper.updateEmployeeFromModel(employee, employeeModel);
 
+        // Delegate update logic to helper
+        serviceHelper.updateEmployeeFromModel(employee, employeeModel);
         employeeRepository.save(employee);
     }
 
-
+    // -------------------- Soft Delete Employee --------------------
+    /**
+     * Marks an employee as INACTIVE (soft delete).
+     *
+     * @param empId employee UUID
+     */
     @Override
-    public void removeEmployeeById(UUID empId){
-        Employee employee = employeeRepository.findById(empId).get();
-        if(employee.getStatus().equals("ACTIVE")){
+    public void removeEmployeeById(UUID empId) {
+        Employee employee = employeeRepository.findById(empId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        if ("ACTIVE".equals(employee.getStatus())) {
             employee.setStatus("INACTIVE");
             employeeRepository.save(employee);
         }
     }
 
+    // -------------------- Unassign Employee from Client --------------------
+    /**
+     * Unassigns an employee from their client.
+     *
+     * @param empId employee UUID
+     */
     @Override
-    public void unassignEmployeeFromClient(UUID empId){
-        Employee employee = employeeRepository.findById(empId).
-                orElseThrow(() -> new RuntimeException("Employee not Found"));
+    public void unassignEmployeeFromClient(UUID empId) {
+        Employee employee = employeeRepository.findById(empId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
         employee.setClient(null);
         employeeRepository.save(employee);
     }
 
+    // -------------------- Find Employees by Designation --------------------
+    /**
+     * Finds employees by designation.
+     *
+     * @param designation EnumConstants.Designation
+     * @return list of EmployeeDTO
+     */
     @Override
-    public List<EmployeeDTO> findByDesignation(EnumConstants.Designation designation){
+    public List<EmployeeDTO> findByDesignation(EnumConstants.Designation designation) {
         List<Employee> employees = employeeRepository.findByDesignation(designation);
 
-        return employees.stream().map(employee -> {
-            EmployeeDTO dto = new EmployeeDTO();
-            BeanUtils.copyProperties(employee, dto);
+        return employees.stream()
+                .map(employee -> {
+                    EmployeeDTO dto = new EmployeeDTO();
+                    BeanUtils.copyProperties(employee, dto);
 
-            // Handle fields that BeanUtils cannot copy or lazy-loaded proxies
-            if (employee.getClient() != null) {
-                dto.setClientId(employee.getClient().getClientId());
-                dto.setClientName(employee.getClient().getCompanyName());
-            }
+                    // Handle fields not copied by BeanUtils
+                    if (employee.getClient() != null) {
+                        dto.setClientId(employee.getClient().getClientId());
+                        dto.setClientName(employee.getClient().getCompanyName());
+                    }
 
-            return dto;
-        }).toList();
-
-
+                    return dto;
+                })
+                .toList();
     }
-
 }

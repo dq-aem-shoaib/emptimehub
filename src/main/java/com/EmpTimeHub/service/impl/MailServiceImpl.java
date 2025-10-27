@@ -32,18 +32,16 @@ public class MailServiceImpl implements MailService {
     /**
      * Sends an email from a sender to a recipient with the specified subject and body.
      *
-     * @param from    Sender's email address.
      * @param to      Recipient's email address.
      * @param subject Subject of the email.
      * @param body    Body content of the email.
-     * @param name    Name of the sender (used in the email body or signature).
      */
     @Override
-    public void sendMail(String from, String to, String subject, String body, MultipartFile attachment) {
+    public void sendMail(String to, String subject, String body, MultipartFile attachment) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(from);
+            helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, false);
@@ -54,9 +52,9 @@ public class MailServiceImpl implements MailService {
 
             mailSender.send(message);
 
-            log.info("Email sent successfully from '{}' to '{}', subject='{}'", from, to, subject);
+            log.info("Email sent successfully  to '{}', subject='{}'", to, subject);
         } catch (MessagingException e) {
-            log.error("Failed to send email from '{}' to '{}', subject='{}': {}", from, to, subject, e.getMessage(), e);
+            log.error("Failed to send email  to '{}', subject='{}': {}", to, subject, e.getMessage(), e);
         }
     }
 

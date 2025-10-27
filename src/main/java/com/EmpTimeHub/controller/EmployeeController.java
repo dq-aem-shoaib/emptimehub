@@ -21,6 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.EmpTimeHub.constants.EndpointConstants.*;
 
@@ -104,6 +105,41 @@ public class EmployeeController {
 
         return ResponseEntity.status(200).body(response);
     }
+
+    /**
+     * Deletes a specific address of the authenticated employee.
+     *
+     * @param userDetails the authenticated user's details.
+     * @param addressId   the UUID of the address to delete.
+     * @return a {@link WebResponseDTO} confirming deletion.
+     */
+    @DeleteMapping(EMPLOYEE_ADDRESS_DELETE)
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<WebResponseDTO<Void>> deleteEmployeeAddress(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable UUID addressId) {
+
+        // Fetch authenticated user
+        User user = userRepository.findByCompanyEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Get employee linked to this user
+        Employee employee = employeeRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Employee not found for user ID: " + user.getUserId()));
+
+        // Perform deletion
+        addressService.deleteAddress(employee.getEmployeeId(), addressId);
+
+        // Build success response
+        WebResponseDTO<Void> response = WebResponseDTO.<Void>builder()
+                .flag(true)
+                .message("Address deleted successfully")
+                .status(HttpStatus.OK.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
 
     /**
      * Retrieves a list of employees filtered by their designation.

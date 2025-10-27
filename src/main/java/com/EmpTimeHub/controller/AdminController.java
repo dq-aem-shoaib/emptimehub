@@ -6,10 +6,7 @@ import com.EmpTimeHub.dto.WebResponseDTO;
 import com.EmpTimeHub.entity.Client;
 import com.EmpTimeHub.model.ClientModel;
 import com.EmpTimeHub.model.EmployeeModel;
-import com.EmpTimeHub.service.AddressService;
-import com.EmpTimeHub.service.AdminService;
-import com.EmpTimeHub.service.ClientService;
-import com.EmpTimeHub.service.EmployeeService;
+import com.EmpTimeHub.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -46,6 +43,7 @@ public class AdminController {
     private final AdminService adminService;
     private final ClientService clientService;
     private final AddressService addressService;
+    private final EmployeeDocumentService employeeDocumentService;
 
     /**
      * Adds a new employee to the system.
@@ -270,6 +268,57 @@ public class AdminController {
         WebResponseDTO<String> response = WebResponseDTO.<String>builder()
                 .flag(true)
                 .message("Client deleted successfully")
+                .status(HttpStatus.OK.value())
+                .response(null)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Deletes an employee's address by ID (Admin only).
+     *
+     * @param employeeId the ID of the employee
+     * @param addressId  the ID of the address to delete
+     * @return ResponseEntity with a success message
+     */
+    @DeleteMapping(ADMIN_DELETE_EMP_ADDRESS)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<WebResponseDTO<String>> deleteEmployeeAddress(
+            @PathVariable UUID employeeId,
+            @PathVariable UUID addressId) {
+
+        addressService.deleteAddress(employeeId, addressId);
+
+        WebResponseDTO<String> response = WebResponseDTO.<String>builder()
+                .flag(true)
+                .message("Employee address deleted successfully by Admin")
+                .status(HttpStatus.OK.value())
+                .response(null)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    /**
+     * Deletes an employee's document by ID (Admin only).
+     *
+     * @param employeeId the ID of the employee
+     * @param documentId the ID of the document to delete
+     * @return ResponseEntity with a success message
+     */
+    @DeleteMapping(ADMIN_DELETE_EMP_DOCUMENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<WebResponseDTO<String>> deleteEmployeeDocument(
+            @PathVariable UUID employeeId,
+            @PathVariable UUID documentId) {
+
+        employeeDocumentService.deleteDocument(employeeId, documentId);
+
+        WebResponseDTO<String> response = WebResponseDTO.<String>builder()
+                .flag(true)
+                .message("Employee document deleted successfully by Admin")
                 .status(HttpStatus.OK.value())
                 .response(null)
                 .build();

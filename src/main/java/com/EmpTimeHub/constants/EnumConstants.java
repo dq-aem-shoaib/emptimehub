@@ -77,4 +77,23 @@ public class EnumConstants {
 
     }
 
+    public enum MailTemplateType {
+        LEAVE_SUBMITTED_MANAGER,
+        LEAVE_SUBMITTED_EMPLOYEE,
+        LEAVE_UPDATED_MANAGER,
+        LEAVE_UPDATED_EMPLOYEE,
+        LEAVE_APPROVED,
+        LEAVE_REJECTED;
+    }
+
+
+    public enum DocumentType {
+        OFFER_LETTER,
+        CONTRACT,
+        TAX_DECLARATION_FORM,
+        WORK_PERMIT,
+        OTHER
+    }
+
+
 }

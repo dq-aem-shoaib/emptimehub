@@ -1,11 +1,9 @@
 package com.EmpTimeHub.service.impl;
 
+import com.EmpTimeHub.config.MailTemplateConfig;
 import com.EmpTimeHub.constants.EnumConstants;
 import com.EmpTimeHub.dto.*;
-import com.EmpTimeHub.entity.Employee;
-import com.EmpTimeHub.entity.EmployeeLeave;
-import com.EmpTimeHub.entity.HolidayCalendar;
-import com.EmpTimeHub.entity.User;
+import com.EmpTimeHub.entity.*;
 import com.EmpTimeHub.exceptions.customExceptions.UserNotFoundException;
 import com.EmpTimeHub.repository.*;
 import com.EmpTimeHub.service.EmployeeLeaveService;
@@ -45,6 +43,8 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     private final AdminRepository adminRepository;
     private final MailService mailService;
     private final HolidayCalendarRepository holidayRepository;
+    private final MailTemplateConfig mailTemplateConfig;
+
     @Autowired
     private NotificationService notificationService;
 
@@ -84,12 +84,12 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         LocalDate fromDate = request.getFromDate();
         LocalDate endDate = request.getToDate();
 
-        // 3. Calculate working days
+        // Calculate working days
         DateRangeRequestDTO rangeRequestDTO = new DateRangeRequestDTO(fromDate, endDate,request.getPartialDay());
         WorkdayResponseDTO workdayResponseDTO = calculateWorkingDays(rangeRequestDTO);
         int totalHolidays = workdayResponseDTO.getTotalHolidays();
 
-        // 4. Determine leave duration
+        // Determine leave duration
         Double leaveDuration = request.getLeaveDuration();
         Boolean partialDay = Boolean.TRUE.equals(request.getPartialDay());
         String subject = request.getCategoryType().name() + " Leave Request";
@@ -98,7 +98,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 ? null
                 : null;
 
-        // 6. Save leave request
+        // Save leave request
         EmployeeLeave leave = EmployeeLeave.builder()
                 .employee(employee)
                 .reportingManager(manager)
@@ -130,44 +130,52 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 leave.getLeaveId()
         );
 
-        // 7. Send email to manager
+        // Send email to manager
         if (manager != null) {
             String managerCompanyMail = manager.getCompanyEmail();
             String managerName = manager.getFirstName();
-            String mailSubject = subject;
-            String mailBody = String.format("""
-            Dear %s,
-            
-            I would like to request leave for the following period:
-            
-            Leave Period: %s to %s
-            LeaveCategoryType: %s
-            FinancialType:%s
-            LeaveDuration Days: %.1f
-            Holidays: %d
-            Reason/Context: %s
+            String employeeName = employee.getFirstName() + " " + employee.getLastName();
+            String employeeId = employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A";
+            String mailSubject = "Leave Request Submission – " + employeeName;
+            String managerLink = "https://portal.company.com/leave";
 
-            Kindly review and approve/reject my leave request.
+            String template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_SUBMITTED_MANAGER);
 
-            Regards,
-            %s
-            """,
+            String mailBody = String.format(template,
                     managerName,
+                    employeeName,
+                    employeeId,
+                    request.getCategoryType(),
                     fromDate,
                     endDate,
-                    request.getCategoryType(),
-                    request.getFinancialType(),
                     leaveDuration,
                     totalHolidays,
                     request.getContext(),
-                    employee.getFirstName()
+                    managerLink
             );
-
-            mailService.sendMail(employee.getCompanyEmail(), managerCompanyMail, mailSubject, mailBody, request.getAttachmentFile());
+            mailService.sendMail(managerCompanyMail, mailSubject, mailBody, request.getAttachmentFile());
             log.info("Leave approval email sent from '{}' to '{}'", employee.getCompanyEmail(), managerCompanyMail);
         }
+        // Send confirmation email to employee
+        String employeeMailSubject = "Leave Request Submitted Successfully – " + employee.getFirstName();
+        String employeeLink="https://portal.company.com/leave";;
+        String template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_SUBMITTED_EMPLOYEE);
 
-        // 8. Return response
+        String employeeMailBody = String.format(template,
+                employee.getFirstName() + " " + employee.getLastName(),
+                employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A",
+                employee.getDesignation() != null ? employee.getDesignation() : "N/A",
+                request.getCategoryType(),
+                fromDate,
+                endDate,
+                leaveDuration,
+                request.getContext(),
+                manager.getFirstName() + " " + manager.getLastName(),
+                employeeLink
+        );
+        mailService.sendMail(employee.getCompanyEmail(), employeeMailSubject, employeeMailBody, request.getAttachmentFile());
+        log.info("Leave submission confirmation email sent to '{}'", employee.getCompanyEmail());
+        //  Return response
         return mapToResponse(savedLeave);
     }
 
@@ -476,62 +484,60 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         // Update timestamp and save
         existingLeave.setUpdatedAt(LocalDateTime.now());
         EmployeeLeave updatedLeave = leaveRepository.save(existingLeave);
+        // Inside your method, before using them
+        String employeeName = employee.getFirstName() + " " + employee.getLastName();
+        String managerName = manager.getFirstName() + " " + manager.getLastName();
 
         if (manager != null) {
-            // Build notification message
-            String message = String.format("%s updated leave from %s to %s (%s days). Category: %s. FinancialType: %s",
-                    employee.getFirstName(),
-                    existingLeave.getFromDate(),
-                    existingLeave.getToDate(),
-                    existingLeave.getLeaveDuration(),
-                    existingLeave.getLeaveCategory(),
-                    existingLeave.getFinancialType()
-            );
-
-            // Send real-time notification to manager via WebSocket
-            notificationService.sendNotification(manager.getUser(), message, existingLeave.getLeaveId());
-
-            log.info("WebSocket notification sent to manager '{}' for updated leaveId={}", manager.getFirstName(), existingLeave.getLeaveId());
-        }
-        if (manager != null) {
+            // Prepare variables
             String managerCompanyMail = manager.getCompanyEmail();
-            String managerName = manager.getFirstName();
-            String employeeMail = employee.getCompanyEmail();
-            String mailSubject = "Updated Leave Request: " + existingLeave.getSubject();
-            String mailBody = String.format("""
-            Dear %s,
-            
-            The following leave request has been updated by %s:
-            
-            Leave Period: %s to %s
-            LeaveCategoryType: %s
-            FinancialType:%s
-            LeaveDuration Days: %.1f
-            Holidays: %d
-            Reason/Context: %s
-            
-            Kindly review and approve/reject the leave.
-            
-            Regards,
-            %s
-            """,
+             managerName = manager.getFirstName() + " " + manager.getLastName();
+             employeeName = employee.getFirstName() + " " + employee.getLastName();
+            String employeeId = employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A";
+            String managerLink = "https://portal.company.com/leave";
+
+            // 1. Email to Manager
+            String mailSubject = "Leave Request Updated – " + employeeName;
+            String template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_UPDATED_MANAGER);
+
+            String mailBody = String.format(template,
                     managerName,
-                    employee.getFirstName(),
+                    employeeName,
+                    employeeId,
+                    existingLeave.getLeaveCategory() != null ? existingLeave.getLeaveCategory() : "N/A",
                     existingLeave.getFromDate(),
                     existingLeave.getToDate(),
-                    existingLeave.getLeaveCategory(),
-                    existingLeave.getFinancialType(),
-                    existingLeave.getLeaveDuration(),
-                    existingLeave.getHolidays(),
-                    existingLeave.getContext(),
-                    employee.getFirstName()
+                    existingLeave.getLeaveDuration() != null ? existingLeave.getLeaveDuration() : 0,
+                    existingLeave.getHolidays() != null ? existingLeave.getHolidays() : 0,
+                    existingLeave.getContext() != null ? existingLeave.getContext() : "N/A",
+                    managerLink
             );
 
-            mailService.sendMail(employeeMail, managerCompanyMail, mailSubject, mailBody,request.getAttachmentFile());
-            log.info("Leave update email sent from '{}' to '{}'", employeeMail, managerCompanyMail);
+
+            mailService.sendMail(managerCompanyMail, mailSubject, mailBody, request.getAttachmentFile());
+            log.info("Leave update email sent from '{}' to '{}'", employee.getCompanyEmail(), managerCompanyMail);
         }
 
-        log.info("Leave updated successfully for leaveId={}", leaveId);
+      // 2. Optional: Confirmation email to Employee
+        String employeeMailSubject = "Leave Request Updated Successfully – " + employeeName;
+        String employeeLink = "https://portal.company.com/leave";
+
+        String template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_UPDATED_EMPLOYEE);
+
+        String employeeMailBody = String.format(template,
+                employeeName,
+                existingLeave.getLeaveCategory() != null ? existingLeave.getLeaveCategory() : "N/A",
+                existingLeave.getFromDate(),
+                existingLeave.getToDate(),
+                existingLeave.getLeaveDuration() != null ? existingLeave.getLeaveDuration() : 0,
+                existingLeave.getHolidays() != null ? existingLeave.getHolidays() : 0,
+                existingLeave.getContext() != null ? existingLeave.getContext() : "N/A",
+                managerName,
+                employeeLink
+        );
+
+        mailService.sendMail(employee.getCompanyEmail(), employeeMailSubject, employeeMailBody, request.getAttachmentFile());
+        log.info("Leave update confirmation email sent to '{}'", employee.getCompanyEmail());
 
         return mapToResponse(updatedLeave);
     }
@@ -590,19 +596,27 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      *
      * @param leaveId      UUID of the leave to update
      * @param status       new leave status (APPROVED or REJECTED)
-     * @param managerComment optional comment from the admin
-     * @param managerEmail   email of the admin performing the update
+     * @param approverComment optional comment from the admin
+     * @param approverEmail   email of the admin performing the update
      * @return updated leave details as {@link LeaveResponseDTO}
      * @throws EntityNotFoundException if the admin user, admin entity, or leave entity is not found
      */
     @Override
-    public LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String managerComment, String managerEmail) {
-        log.info("Manager '{}' updating leaveId={} with status={}", managerEmail, leaveId, status);
+    public LeaveResponseDTO updateLeaveStatus(UUID leaveId, EnumConstants.LeaveStatus status, String approverComment, String approverEmail) {
+        log.info("Approver '{}' updating leaveId={} with status={}", approverEmail, leaveId, status);
 
-        // Fetch logged-in manager
-        Employee manager = employeeRepository.getEmployeeByEmail(managerEmail);
-        if (manager == null) {
-            throw new EntityNotFoundException("Manager not found with email: " + managerEmail);
+        // Check if approver is Manager or Admin
+        Employee approver = employeeRepository.getEmployeeByEmail(approverEmail);
+        boolean isAdmin = false;
+        String approverName;
+
+        if (approver == null) {
+            Admin admin = adminRepository.findByEmail(approverEmail)
+                    .orElseThrow(() -> new EntityNotFoundException("Admin not found with email: " + approverEmail));
+            approverName = admin.getFullName();
+            isAdmin = true;
+        } else {
+            approverName = approver.getFirstName();
         }
 
         // Fetch leave with employee and reporting manager
@@ -629,7 +643,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         }
 
         // Deduct only if leave type is not PAID
-        if (leave.getFinancialType() != null && leave.getFinancialType() != EnumConstants.FinancialType.UNPAID) {
+        if (leave.getFinancialType() != null && leave.getFinancialType() != EnumConstants.FinancialType.UNPAID&&status.equals(EnumConstants.LeaveStatus.APPROVED)) {
             if (workingDays > availableLeaves) {
                 throw new IllegalArgumentException("Insufficient available leaves");
             }
@@ -644,15 +658,20 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
 
         // Validate that the logged-in manager is the reporting manager
-        if (employee.getReportingManager() == null || !employee.getReportingManager().getEmployeeId().equals(manager.getEmployeeId())) {
-            log.warn("Unauthorized attempt: '{}' tried to update leaveId={} not belonging to their team", managerEmail, leaveId);
-            throw new AccessDeniedException("You are not authorized to update this leave");
+        if (!isAdmin) {
+            if (employee.getReportingManager() == null ||
+                    !employee.getReportingManager().getEmployeeId().equals(approver.getEmployeeId())) {
+                log.warn("Unauthorized attempt: '{}' tried to update leaveId={} not belonging to their team",
+                        approverEmail, leaveId);
+                throw new AccessDeniedException("You are not authorized to update this leave");
+            }
+            leave.setReportingManager(approver); // keep reporting manager for consistency
         }
 
         // Update leave details
         leave.setStatus(status != null ? status : leave.getStatus());
-        leave.setManagerComment(managerComment != null ? managerComment : leave.getManagerComment());
-        leave.setReportingManager(manager); // store approving manager
+        leave.setApproverComment(approverComment != null ? approverComment : leave.getApproverComment());
+        leave.setApproverName(approverName);
         leave.setUpdatedAt(LocalDateTime.now());
 
         EmployeeLeave updatedLeave = leaveRepository.save(leave);
@@ -663,7 +682,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 leave.getEmployee().getUser(),
                 "Your leave from " + leave.getFromDate() + " to " + leave.getToDate() +
                         " (" + leave.getLeaveDuration() + " days) has been " + statusMsg +
-                        ". Comment: " + managerComment,
+                        ". Comment: " + approverComment,
                 leave.getLeaveId()
         );
 
@@ -679,80 +698,57 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      *
      * @param leave the {@link EmployeeLeave} entity containing leave and employee details
      */
-    private void sendLeaveStatusNotification(EmployeeLeave leave,Employee employee) {
-        if (leave == null || leave.getEmployee() == null) {
+    private void sendLeaveStatusNotification(EmployeeLeave leave, Employee employee) {
+        if (leave == null || employee == null) {
             log.warn("Cannot send email: leave or employee is null for leaveId={}", leave != null ? leave.getLeaveId() : "null");
             return;
         }
 
         try {
-
-            Employee manager = employee.getReportingManager(); // reporting manager
-            String managerName = (manager != null )
-                    ? manager.getFirstName()
-                    : "Manager";
-            String managerEmail = (manager != null)
-                    ? manager.getCompanyEmail()
-                    : null;
-
+            String approverName = leave.getApproverName();
             String employeeEmail = employee.getCompanyEmail();
             String employeeName = employee.getFirstName();
 
-            String subject = "Your Leave Request ("
-                    + (leave.getLeaveCategory() != null ? leave.getLeaveCategory() : "") + ") has been "
-                    + (leave.getStatus() != null ? leave.getStatus() : "UPDATED");
+            String portalLink = "https://portal.company.com/leave";
+            String leaveType = leave.getLeaveCategory() != null ? leave.getLeaveCategory().name() : "N/A";
+            String totalDays = leave.getLeaveDuration() != null ? String.valueOf(leave.getLeaveDuration()) : "N/A";
+            String approvalDate = leave.getUpdatedAt() != null ? leave.getUpdatedAt().toString() : "N/A";
+            String approverComment = leave.getApproverComment() != null ? leave.getApproverComment() : "No comments";
 
-            String status = leave.getStatus() != null ? leave.getStatus().name() : "UPDATED";
-            String managerComment = leave.getManagerComment() != null ? leave.getManagerComment() : "No comments";
+            String subject = "";
+            String template;
+            String body="";
 
-            String body;
-
-            if ("APPROVED".equals(status)) {
-                body = String.format("""
-            Dear %s,
-
-            Your leave request has been %s.
-
-            Leave Period: %s to %s
-            Type: %s
-            Leave Duration: %.1f
-            Holidays: %d
-            Manager Comment: %s
-
-            Regards,
-            %s
-            """,
+            if (leave.getStatus() == EnumConstants.LeaveStatus.APPROVED) {
+                subject = String.format("Leave Approved – %s to %s", leave.getFromDate(), leave.getToDate());
+                template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_APPROVED);
+                body = String.format(template,
                         employeeName,
-                        status,
                         leave.getFromDate(),
                         leave.getToDate(),
-                        leave.getLeaveCategory() != null ? leave.getLeaveCategory() : "N/A",
-                        leave.getLeaveDuration() != null ? leave.getLeaveDuration() : 0,
-                        leave.getHolidays() != null ? leave.getHolidays() : 0,
-                        managerComment,
-                        managerName
+                        approverName,
+                        leaveType,
+                        totalDays,
+                        approverName,
+                        approvalDate,
+                        portalLink
                 );
-            } else  {
-                body = String.format("""
-            Dear %s,
-
-            Your leave request has been %s.
-
-            Manager Comment: %s
-
-            Regards,
-            %s
-            """,
+            } else if (leave.getStatus() == EnumConstants.LeaveStatus.REJECTED) {
+                subject = String.format("Leave Request Update – %s to %s", leave.getFromDate(), leave.getToDate());
+                template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_REJECTED);
+                body = String.format(template,
                         employeeName,
-                        status,
-                        managerComment,
-                        managerName
+                        leave.getFromDate(),
+                        leave.getToDate(),
+                        approverName,
+                        leaveType,
+                        totalDays,
+                        approverName,
+                        approverComment,
+                        portalLink
                 );
             }
-
-            // Send email from manager if email exists, else fallback to employee email
-            String senderEmail = managerEmail != null ? managerEmail : employeeEmail;
-            mailService.sendMail(senderEmail, employeeEmail, subject, body,null);
+            mailService.sendMail( employeeEmail, subject, body, null);
 
             log.info("Leave status notification email sent to employee '{}'", employeeEmail);
 
@@ -760,7 +756,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             log.error("Failed to send leave status email for leaveId={}: {}", leave.getLeaveId(), e.getMessage(), e);
         }
     }
-
 
 
     /**
@@ -830,10 +825,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .build();
     }
 
-
-
-
-
     /**
      * Maps an EmployeeLeave entity to a LeaveResponseDTO.
      *
@@ -843,9 +834,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
     private LeaveResponseDTO mapToResponse(EmployeeLeave leave) {
         return LeaveResponseDTO.builder()
                 .leaveId(leave.getLeaveId())
-                .approverName(
-                        leave.getReportingManager() != null ? leave.getReportingManager().getFirstName() : null
-                )
+                .approverName(leave.getApproverName())
                 .employeeName(
                         leave.getEmployee() != null
                                 ? leave.getEmployee().getFirstName()
@@ -860,7 +849,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .leaveDuration(leave.getLeaveDuration())
                 .holidays(leave.getHolidays())
                 .status(leave.getStatus() != null ? leave.getStatus().name() : null)
-                .managerComment(leave.getManagerComment())
+                .approverComment(leave.getApproverComment())
                 .attachmentUrl(leave.getAttachmentUrl())
                 .build();
     }
@@ -912,8 +901,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         return new WebResponseDTO<>(true, "Leave check completed.", 200, dto);
     }
 
-
-
     /**
      * Fetches all pending leaves for a manager identified by their company email.
      *
@@ -923,56 +910,60 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      * 3. Queries the leave repository for all pending leaves under this manager.
      * 4. Maps the pending EmployeeLeave entities to ManagerLeaveDashboardDTO objects.
      *
-     * @param managerEmail the company email of the manager
+     * @param userCompanyEmail the company email of the manager or admin
      * @return a list of ManagerLeaveDashboardDTO containing pending leave details
      * @throws EntityNotFoundException if the User or Employee corresponding to the email is not found
      */
-    public List<ManagerLeaveDashboardDTO> getPendingLeavesForManager(String managerEmail) {
-        log.info("==== Start: Fetching pending leaves for manager with email={} ====", managerEmail);
+    public List<PendingLeavesResponseDTO> getPendingLeavesForManagerAndAdmin(String userCompanyEmail) {
+        log.info("==== Start: Fetching pending leaves for user email={} ====", userCompanyEmail);
 
-        // 1. Fetch user by email
-        User user = userRepository.findByCompanyEmail(managerEmail)
-                .orElseThrow(() -> {
-                    log.error("User not found with email={}", managerEmail);
-                    return new EntityNotFoundException("Manager not found with email: " + managerEmail);
-                });
-        log.debug("Found userId={} for managerEmail={}", user.getUserId(), managerEmail);
+        // 1. Fetch user
+        User user = userRepository.findByCompanyEmail(userCompanyEmail)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + userCompanyEmail));
 
-        // 2. Fetch employee (manager) by userId
-        Employee manager = employeeRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> {
-                    log.error("Employee record not found for userId={}", user.getUserId());
-                    return new EntityNotFoundException("Manager record not found for userId: " + user.getUserId());
-                });
-        log.debug("Found managerId={} for userId={}", manager.getEmployeeId(), user.getUserId());
+        // 2. Determine role
+        String role = user.getRole().name();
+        log.info("User {} has role={}", userCompanyEmail, role);
 
-        // 3. Fetch pending leaves for this manager
-        List<EmployeeLeave> leaves = leaveRepository.findPendingLeavesByManager(manager.getEmployeeId(), EnumConstants.LeaveStatus.PENDING);
-        log.info("Found {} pending leave(s) for managerId={}", leaves.size(), manager.getEmployeeId());
+        List<EmployeeLeave> leaves;
+
+        // 3. Logic for Manager and Admin
+        if (role.equals("MANAGER")) {
+            // Manager: Only team’s pending leaves
+            Employee manager = employeeRepository.findByUser_UserId(user.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("Manager record not found for userId: " + user.getUserId()));
+
+            leaves = leaveRepository.findPendingLeavesByManager(
+                    manager.getEmployeeId(),
+                    EnumConstants.LeaveStatus.PENDING
+            );
+            log.info("Manager {} -> Found {} pending leaves", manager.getEmployeeId(), leaves.size());
+
+        } else if (role.equals("ADMIN")) {
+            // Admin: Fetch all pending leaves (any manager or none)
+            leaves = leaveRepository.findByStatus(EnumConstants.LeaveStatus.PENDING);
+            log.info("Admin {} -> Found {} pending leaves (all employees)", userCompanyEmail, leaves.size());
+
+        } else {
+            throw new AccessDeniedException("Only MANAGER or ADMIN can view pending leaves");
+        }
 
         // 4. Map to DTOs
-        List<ManagerLeaveDashboardDTO> dtoList = leaves.stream()
-                .map(el -> {
-                    ManagerLeaveDashboardDTO dto = ManagerLeaveDashboardDTO.builder()
-                            .leaveId(el.getLeaveId())
-                            .employeeName(el.getEmployee().getFirstName() + " " + el.getEmployee().getLastName())
-                            .leaveCategory(el.getLeaveCategory().name())
-                            .financialType(el.getFinancialType().name())
-                            .fromDate(el.getFromDate())
-                            .toDate(el.getToDate())
-                            .leaveDuration(el.getLeaveDuration())
-                            .context(el.getContext())
-                            .attachmentUrl(el.getAttachmentUrl())
-                            .remainingLeaves(el.getEmployee().getAvailableLeaves())
-                            .status(el.getStatus().name())
-                            .build();
-                    log.debug("Mapped leaveId={} for employeeId={} to DTO", el.getLeaveId(), el.getEmployee().getEmployeeId());
-                    return dto;
-                })
+        return leaves.stream()
+                .map(el -> PendingLeavesResponseDTO.builder()
+                        .leaveId(el.getLeaveId())
+                        .employeeName(el.getEmployee().getFirstName() + " " + el.getEmployee().getLastName())
+                        .leaveCategoryTpe(el.getLeaveCategory().name())
+                        .financialType(el.getFinancialType().name())
+                        .fromDate(el.getFromDate())
+                        .toDate(el.getToDate())
+                        .leaveDuration(el.getLeaveDuration())
+                        .context(el.getContext())
+                        .attachmentUrl(el.getAttachmentUrl())
+                        .remainingLeaves(el.getEmployee().getAvailableLeaves())
+                        .status(el.getStatus().name())
+                        .build())
                 .collect(Collectors.toList());
-
-        log.info("==== Completed fetching pending leaves for managerId={} ====", manager.getEmployeeId());
-        return dtoList;
     }
 
 
@@ -984,7 +975,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
      * @return list of EmployeeLeaveDayDTO
      */
     @Override
-    public List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail) {
+    public List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail,LocalDate currentYear) {
 
         log.info("Fetching approved leaves for employee with email: {}", companyMail);
 
@@ -997,7 +988,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + companyMail));
 
         // Current year range
-        LocalDate startOfYear = LocalDate.now().withDayOfYear(1);
+        LocalDate startOfYear = currentYear.withDayOfYear(1);
         LocalDate endOfYear = LocalDate.now().withMonth(12).withDayOfMonth(31);
 
         // Fetch approved leaves

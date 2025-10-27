@@ -57,7 +57,7 @@ public class EmployeeLeave {
     private EnumConstants.LeaveStatus status = EnumConstants.LeaveStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")
-    private String managerComment;
+    private String approverComment;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -88,4 +88,7 @@ public class EmployeeLeave {
 
     @Column(name = "notice_period_violation", nullable = false)
     private Boolean noticePeriodViolation = false;
+
+    @Column(name = "approver_name", length = 255)
+    private String approverName;
 }
