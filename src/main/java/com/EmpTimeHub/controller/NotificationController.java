@@ -66,21 +66,21 @@ public class NotificationController {
     /**
      * Mark a specific notification as read.
      *
-     * @param notificationId ID of the notification to mark as read
+     * @param notificationIds IDs of the notification to mark as read
      * @param userDetails    injected authenticated user details
      * @return HTTP 204 No Content
      */
     @PatchMapping(READ_NOTIFICATION)
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN', 'EMPLOYEE')")
-    public ResponseEntity<WebResponseDTO<Void>> markAsRead(@RequestParam UUID notificationId,
+    public ResponseEntity<WebResponseDTO<Void>> markAsRead(@RequestParam List<UUID> notificationIds,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
 
         String email = userDetails.getUsername();
-        log.info("User {} marking notificationId={} as read", email, notificationId);
+        log.info("User {} marking notificationId={} as read", email, notificationIds);
 
-        notificationService.markAsRead(notificationId);
+        notificationService.markAsRead(notificationIds);
 
-        log.info("NotificationId={} marked as read for user {}", notificationId, email);
+        log.info("NotificationId={} marked as read for user {}", notificationIds, email);
         return ResponseEntity.ok(
                 WebResponseDTO.<Void>builder()
                         .flag(true)
@@ -99,17 +99,17 @@ public class NotificationController {
 
     @DeleteMapping(CLEAR_NOTIFICATION)
     @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN', 'EMPLOYEE')")
-    public ResponseEntity<WebResponseDTO<Void>> clearNotification(@RequestParam UUID notificationId,
+    public ResponseEntity<WebResponseDTO<Void>> clearNotification(@RequestParam List<UUID> notificationIds,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
         String companyMail = userDetails.getUsername();
-        log.info("User {} deleting notificationId={}", companyMail, notificationId);
+        log.info("User {} deleting notificationId={}", companyMail, notificationIds);
 
         User user = userRepository.findByCompanyEmail(companyMail)
                 .orElseThrow(() -> new IllegalStateException("User not found for email: " + companyMail));
 
-        notificationService.clearNotification(user, notificationId);
+        notificationService.clearNotification(user, notificationIds);
 
-        log.info("NotificationId={} deleted for user {}", notificationId, companyMail);
+        log.info("NotificationId={} deleted for user {}", notificationIds, companyMail);
         return ResponseEntity.ok(
                 WebResponseDTO.<Void>builder()
                         .flag(true)
