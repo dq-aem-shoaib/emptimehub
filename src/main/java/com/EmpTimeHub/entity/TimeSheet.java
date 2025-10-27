@@ -46,8 +46,8 @@ public class TimeSheet {
     @Column(name = "task_name", columnDefinition = "TEXT")
     private String taskName;
 
-    @Column(name = "task_description", columnDefinition = "TEXT")
-    private String taskDescription;
+    @Column(name = "manager_comment", columnDefinition = "TEXT")
+    private String managerComment;
 
     @Column(name = "status", length = 20)
     private String status;

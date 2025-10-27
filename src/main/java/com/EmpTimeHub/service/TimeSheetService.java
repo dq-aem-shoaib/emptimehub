@@ -11,12 +11,19 @@ import java.util.UUID;
 
 public interface TimeSheetService {
     List<TimeSheet> createTimeSheet(List<TimeSheetModel> timeSheet, String loggedInUserEmail);
-    TimeSheetResponseDto getTimeSheetById(UUID timesheetId, String loggedInUserEmail);
-    Page<TimeSheetResponseDto> getAllTimeSheets(int page, int size, String direction, String orderBy,
-                                     String loggedInUserEmail, LocalDate startDate, LocalDate endDate);
 
-    void updateTimeSheet(UUID timesheetId,TimeSheetModel updatedSheet, String loggedInUserEmail);
-    TimeSheet updateStatus(UUID timesheetId, String status);
+    TimeSheetResponseDto getTimeSheetById(UUID timesheetId, String loggedInUserEmail);
+
+    Page<TimeSheetResponseDto> getAllTimeSheets(int page, int size, String direction, String orderBy,
+                                                String loggedInUserEmail, LocalDate startDate, LocalDate endDate);
+
+    void updateTimeSheet(List<TimeSheetModel> updatedSheets, String loggedInUserEmail);
+
+    void approveByManager(List<UUID> timesheetIds, String loggedInUser);
+
+    void rejectByManager(List<UUID> timesheetIds, String loggedInUser);
+
     void deleteTimeSheet(UUID timesheetId, String loggedInUserEmail);
-    void requestToManager(String loggedInEmail);
+
+    void requestToManager(List<UUID> timesheetIds, String loggedInEmail);
 }
