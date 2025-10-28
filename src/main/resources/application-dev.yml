@@ -1,15 +1,24 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/emptimehub_dev
+    url: jdbc:postgresql://localhost:5432/emptimehub_local
     username: postgres
     password: admin
 
   flyway:
-    locations: classpath:db/migration,classpath:db/seed/dev
-
+    locations: classpath:db/seed/local,classpath:db/migration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: hunter.king2929@gmail.com
+    password: vhrindtnjmjdhzer
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 cors:
-  allowed-origins: http://localhost:3000,http://localhost:8081
+  allowed-origins: http://localhost:8080
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-  allowed-headers: "*"
+  allowed-headers: "*" # Not used in code anymore directly
   allow-credentials: true
-
