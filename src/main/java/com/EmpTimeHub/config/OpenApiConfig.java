@@ -42,7 +42,7 @@ public class OpenApiConfig {
                         .title("EmpTimeHub API")
                         .version("v1")
                         .description("API documentation with security"))
-                        .servers(List.of(new Server().url("https://emptimehub-production.up.railway.app/")))
+                        .servers(List.of(new Server().url("https://emptimehub-production.up.railway.app")))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,
