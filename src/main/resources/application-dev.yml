@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/emptimehub_local
+    url: jdbc:postgresql://postgres:DMuMAPuvGMNgKCFwyqGgwutiwRcPuJzf@postgres.railway.internal:5432/railway
     username: postgres
-    password: admin
+    password: DMuMAPuvGMNgKCFwyqGgwutiwRcPuJzf
 
   flyway:
     locations: classpath:db/seed/local,classpath:db/migration
