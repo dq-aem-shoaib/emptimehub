@@ -1,9 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres:DMuMAPuvGMNgKCFwyqGgwutiwRcPuJzf@postgres.railway.internal:5432/railway
-    username: postgres
-    password: DMuMAPuvGMNgKCFwyqGgwutiwRcPuJzf
-
+  url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   flyway:
     locations: classpath:db/seed/local,classpath:db/migration
   mail:
