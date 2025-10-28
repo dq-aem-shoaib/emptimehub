@@ -17,7 +17,7 @@ spring:
           starttls:
             enable: true
 cors:
-  allowed-origins: http://localhost:8080,http://localhost:3000
+  allowed-origins: ${CORS_ORIGIN:http://localhost:3000}
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
   allowed-headers: "*" # Not used in code anymore directly
   allow-credentials: true
