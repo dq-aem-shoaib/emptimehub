@@ -23,4 +23,11 @@ public interface EmployeeService {
     void unassignEmployeeFromClient(UUID empId);
 
     List<EmployeeDTO> findByDesignation(EnumConstants.Designation designation);
+    /**
+     * Fetches all employees reporting to the specified manager.
+     *
+     * @param managerUserId the UUID of the manager's user account
+     * @return list of {@link EmployeeDTO} representing employees under that manager
+     */
+    List<EmployeeDTO> getEmployeesUnderManager(UUID managerUserId);
 }

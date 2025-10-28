@@ -101,6 +101,7 @@ public class EndpointConstants {
     public static final String GET_BY_DESIGNATION = EMPLOYEE_API + "/designation/{designation}";
     //common api for address
     public static final String EMPLOYEE_ADDRESS_DELETE = EMPLOYEE_API + "/address/delete";
+    public static final String MAANAGER_VIEW_EMPLOYEES = EMPLOYEE_API + "/manager/employees";
 
 
 

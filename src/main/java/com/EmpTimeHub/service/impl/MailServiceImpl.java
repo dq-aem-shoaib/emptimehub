@@ -44,7 +44,7 @@ public class MailServiceImpl implements MailService {
             helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(body, false);
+            helper.setText(body.replace("\n", "<br/>"), true);
             if (attachment != null && !attachment.isEmpty()) {
                 helper.addAttachment(attachment.getOriginalFilename(), attachment);
                 log.info("Attached file '{}' to email.", attachment.getOriginalFilename());

@@ -111,10 +111,9 @@ public interface EmployeeLeaveService {
     List<PendingLeavesResponseDTO> getPendingLeavesForManagerAndAdmin(String mangerCompanyMail);
 
     /**
-     * Get all approved leaves of an employee for the current year.
-     *
-     * @param companyMail the logged-in employee's company email
-     * @return list of EmployeeLeaveDayDTO containing each leave day and its duration
+     * Fetches approved leaves for the given year, applying role-based access (Employee, Manager, Admin).
+     * Excludes weekends and organization holidays from the result.
+     * @return list of approved leave day details for the specified employee and year.
      */
-    List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail,LocalDate currentYear);
+    List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail, UUID employeeId, LocalDate currentYear);
 }

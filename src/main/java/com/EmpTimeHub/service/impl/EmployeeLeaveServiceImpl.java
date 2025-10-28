@@ -125,7 +125,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         notificationService.sendNotification(
                 manager.getUser(),
-                employee.getFirstName() + " applied leave from " + leave.getFromDate() + " to " + leave.getToDate() +
+                employee.getFirstName()+ " "+employee.getLastName() + " applied leave from " + leave.getFromDate() + " to " + leave.getToDate() +
                         " (" + leave.getLeaveDuration() + " days). Category: " + leave.getLeaveCategory(),
                 leave.getLeaveId()
         );
@@ -133,9 +133,9 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         // Send email to manager
         if (manager != null) {
             String managerCompanyMail = manager.getCompanyEmail();
-            String managerName = manager.getFirstName();
+            String managerName = manager.getFirstName()+ " "+manager.getLastName();
             String employeeName = employee.getFirstName() + " " + employee.getLastName();
-            String employeeId = employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A";
+            String employeeId = employee.getCompanyId() != null ? employee.getCompanyId().toString() : "N/A";
             String mailSubject = "Leave Request Submission – " + employeeName;
             String managerLink = "https://portal.company.com/leave";
 
@@ -157,13 +157,13 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             log.info("Leave approval email sent from '{}' to '{}'", employee.getCompanyEmail(), managerCompanyMail);
         }
         // Send confirmation email to employee
-        String employeeMailSubject = "Leave Request Submitted Successfully – " + employee.getFirstName();
+        String employeeMailSubject = "Leave Request Submitted Successfully – " + employee.getFirstName()+ " "+employee.getLastName();
         String employeeLink="https://portal.company.com/leave";;
         String template = mailTemplateConfig.getTemplate(EnumConstants.MailTemplateType.LEAVE_SUBMITTED_EMPLOYEE);
 
         String employeeMailBody = String.format(template,
-                employee.getFirstName() + " " + employee.getLastName(),
-                employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A",
+                employee.getFirstName()+ " " + employee.getLastName(),
+                employee.getCompanyId() != null ? employee.getCompanyId().toString() : "N/A",
                 employee.getDesignation() != null ? employee.getDesignation() : "N/A",
                 request.getCategoryType(),
                 fromDate,
@@ -373,10 +373,39 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
         EmployeeLeave leave = leaveRepository.findById(leaveId)
                 .orElseThrow(() -> new EntityNotFoundException("Leave not found with ID: " + leaveId));
+        EnumConstants.Role role = user.getRole();
+        if (role == EnumConstants.Role.EMPLOYEE) {
+            if (!leave.getEmployee().getEmployeeId().equals(employee.getEmployeeId())) {
+                log.warn("EMPLOYEE '{}' attempted to access leaveId={} which does not belong to them",
+                        email, leaveId);
+                throw new AccessDeniedException("You are not authorized to view this leave");
+            }
+            log.info("EMPLOYEE '{}' accessed their own leaveId={}", email, leaveId);
+        }
 
-        if (!leave.getEmployee().getEmployeeId().equals(employee.getEmployeeId())) {
-            log.warn("User '{}' attempted to access leaveId={} which does not belong to them", email, leaveId);
-            throw new AccessDeniedException("You are not authorized to view this leave");
+        else if (role == EnumConstants.Role.MANAGER) {
+            List<Employee> teamMembers = employeeRepository.findByReportingManager_EmployeeId(employee.getEmployeeId());
+
+            boolean isTeamMember = teamMembers.stream()
+                    .anyMatch(member -> member.getEmployeeId().equals(leave.getEmployee().getEmployeeId()));
+
+            if (!isTeamMember) {
+                log.warn("MANAGER '{}' attempted to access leaveId={} which does not belong to their team",
+                        email, leaveId);
+                throw new AccessDeniedException("You are not authorized to view this leave");
+            }
+
+            log.info("MANAGER '{}' accessed team member's leaveId={} (EmployeeId={})",
+                    email, leaveId, leave.getEmployee().getEmployeeId());
+        }
+
+        else if (role == EnumConstants.Role.ADMIN) {
+            log.info("ADMIN '{}' accessed leaveId={}", email, leaveId);
+        }
+
+        else {
+            log.warn("User '{}' with unknown role '{}' tried to access leaveId={}", email, role, leaveId);
+            throw new AccessDeniedException("Unauthorized role access");
         }
 
         log.info("Leave fetched successfully for leaveId={} and user '{}'", leaveId, email);
@@ -493,7 +522,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             String managerCompanyMail = manager.getCompanyEmail();
              managerName = manager.getFirstName() + " " + manager.getLastName();
              employeeName = employee.getFirstName() + " " + employee.getLastName();
-            String employeeId = employee.getEmployeeId() != null ? employee.getEmployeeId().toString() : "N/A";
+            String employeeId = employee.getCompanyId() != null ? employee.getCompanyId().toString() : "N/A";
             String managerLink = "https://portal.company.com/leave";
 
             // 1. Email to Manager
@@ -616,7 +645,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             approverName = admin.getFullName();
             isAdmin = true;
         } else {
-            approverName = approver.getFirstName();
+            approverName = approver.getFirstName()+ " "+approver.getLastName();
         }
 
         // Fetch leave with employee and reporting manager
@@ -707,7 +736,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
         try {
             String approverName = leave.getApproverName();
             String employeeEmail = employee.getCompanyEmail();
-            String employeeName = employee.getFirstName();
+            String employeeName = employee.getFirstName()+ " "+employee.getLastName();
 
             String portalLink = "https://portal.company.com/leave";
             String leaveType = leave.getLeaveCategory() != null ? leave.getLeaveCategory().name() : "N/A";
@@ -837,7 +866,7 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 .approverName(leave.getApproverName())
                 .employeeName(
                         leave.getEmployee() != null
-                                ? leave.getEmployee().getFirstName()
+                                ? leave.getEmployee().getFirstName()+ " "+leave.getEmployee().getLastName()
                                 : null
                 )
                 .fromDate(leave.getFromDate())
@@ -968,48 +997,98 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
 
 
     /**
-     * Fetch approved leaves for the current year for a given employee (by company email).
-     * Each leave is split into individual days with duration.
+     * Fetches approved leave days for the specified employee and year, applying role-based access rules.
+     * <p>
+     * - EMPLOYEE: Can view only their own leaves.<br>
+     * - MANAGER: Can view only subordinates’ leaves.<br>
+     * - ADMIN: Can view any employee’s leaves.<br>
+     * <p>
+     * Weekends (Saturday, Sunday) and company-declared holidays are excluded from the results.
      *
-     * @param companyMail logged-in employee's company email
-     * @return list of EmployeeLeaveDayDTO
+     * @param companyMail the logged-in user’s company email for role and access validation
+     * @param employeeId  the target employee ID (required for MANAGER and ADMIN roles)
+     * @param currentYear the year to fetch approved leaves for; if null, defaults to the current year
+     * @return list of {@link EmployeeLeaveDayDTO} containing daily approved leave entries excluding weekends and holidays
      */
     @Override
-    public List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail,LocalDate currentYear) {
+    public List<EmployeeLeaveDayDTO> getApprovedLeavesForCurrentYear(String companyMail, UUID employeeId, LocalDate currentYear) {
+        log.info("Fetching approved leaves for user: {} (employeeId param: {})", companyMail, employeeId);
 
-        log.info("Fetching approved leaves for employee with email: {}", companyMail);
-
-        //  Get user by company email
-        User user = userRepository.findByCompanyEmail(companyMail)
+        // Get logged-in user
+        User loggedInUser = userRepository.findByCompanyEmail(companyMail)
                 .orElseThrow(() -> new RuntimeException("User not found: " + companyMail));
 
-        // Get employee
-        Employee employee = employeeRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + companyMail));
+        String role = loggedInUser.getRole().name();
+        log.debug("User role identified as: {}", role);
 
-        // Current year range
-        LocalDate startOfYear = currentYear.withDayOfYear(1);
-        LocalDate endOfYear = LocalDate.now().withMonth(12).withDayOfMonth(31);
+        Employee targetEmployee;
+
+        //  Role-based employee selection
+        if (role.equals("EMPLOYEE")) {
+            // Employee can only view own data
+            targetEmployee = employeeRepository.findByUser_UserId(loggedInUser.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Employee record not found for user: " + companyMail));
+
+        } else if (role.equals("MANAGER")) {
+            // Manager must pass employeeId and it must belong to them
+            if (employeeId == null)
+                throw new RuntimeException("Manager must provide employeeId to fetch subordinate's leaves");
+
+            Employee manager = employeeRepository.findByUser_UserId(loggedInUser.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Manager record not found"));
+
+             targetEmployee = employeeRepository.findByIdWithManager(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
+
+            if (targetEmployee.getReportingManager() == null ||
+                    !targetEmployee.getReportingManager().getEmployeeId().equals(manager.getEmployeeId())) {
+                throw new RuntimeException("Access denied: Employee does not report to this manager");
+            }
+
+        } else if (role.equals("ADMIN")) {
+            // Admin can view any employee's leaves
+            if (employeeId == null)
+                throw new RuntimeException("Admin must provide employeeId to fetch employee's leaves");
+
+            targetEmployee = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
+
+        } else {
+            throw new RuntimeException("Unsupported role: " + role);
+        }
+
+        //  Compute date range for current year
+        LocalDate now = (currentYear != null) ? currentYear : LocalDate.now();
+        LocalDate startOfYear = now.withDayOfYear(1);
+        LocalDate endOfYear = now.withMonth(12).withDayOfMonth(31);
 
         // Fetch approved leaves
         List<EmployeeLeave> leaves = leaveRepository.findByEmployeeAndStatusAndFromDateBetween(
-                employee,
+                targetEmployee,
                 EnumConstants.LeaveStatus.APPROVED,
                 startOfYear,
                 endOfYear
         );
+        log.info("Found {} approved leaves for employee: {}", leaves.size(), targetEmployee.getEmployeeId());
 
-        log.info("Found {} approved leave(s) for employee: {}", leaves.size(), companyMail);
+        if (leaves.isEmpty()) return Collections.emptyList();
 
-        // Convert each leave to individual days with duration
+        //  Fetch holidays
+        List<HolidayCalendar> holidayList = holidayRepository.findByHolidayDateBetween(startOfYear, endOfYear);
+        Set<LocalDate> holidays = holidayList.stream()
+                .map(HolidayCalendar::getHolidayDate)
+                .collect(Collectors.toSet());
+        log.debug("Loaded {} holidays for year {}", holidays.size(), now.getYear());
+
+        // Convert each leave into daily entries and exclude weekends & holidays
         List<EmployeeLeaveDayDTO> leaveDays = leaves.stream()
                 .flatMap(leave -> {
                     LocalDate from = leave.getFromDate();
                     LocalDate to = leave.getToDate();
-
                     double dailyDuration = leave.getPartialDay() ? leave.getLeaveDuration() : 1.0;
 
                     return from.datesUntil(to.plusDays(1))
+                            .filter(date -> !isNonWorkingDay(date, holidays))
                             .map(date -> EmployeeLeaveDayDTO.builder()
                                     .date(date)
                                     .leaveCategory(leave.getLeaveCategory())
@@ -1018,8 +1097,19 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
                 })
                 .toList();
 
-        log.info("Returning {} leave day entries for employee: {}", leaveDays.size(), companyMail);
+        log.info("Returning {} working leave-day entries for employee {}", leaveDays.size(), targetEmployee.getEmployeeId());
         return leaveDays;
     }
+
+    /**
+     * Check whether a date is weekend or holiday.
+     */
+    private boolean isNonWorkingDay(LocalDate date, Set<LocalDate> holidays) {
+        DayOfWeek day = date.getDayOfWeek();
+        boolean isWeekend = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
+        boolean isHoliday = holidays.contains(date);
+        return isWeekend || isHoliday;
+    }
+
 
 }
