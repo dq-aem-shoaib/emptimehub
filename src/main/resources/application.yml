@@ -6,9 +6,6 @@ spring:
   profiles:
     active: dev
 
-server:
-  port: 8081
-
   jpa:
     show-sql: true
     hibernate:
@@ -19,6 +16,8 @@ server:
     baseline-on-migrate: true
     validate-on-migrate: true
 
+server:
+  port: 8081
 
 jwt:
   secret: dGhpc0lzQWJhc2U2NFNhZmVTZWNyZXRLZXkxMjM=====================
@@ -37,6 +36,6 @@ logging:
         descriptor:
           sql:
             BasicBinder: TRACE
+
 upload:
   dir: uploads/images
-
