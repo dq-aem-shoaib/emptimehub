@@ -164,4 +164,41 @@ public class EmployeeController {
 
         return ResponseEntity.status(200).body(response);
     }
+
+    /**
+     * Fetch all employees under the logged-in manager.
+     *
+     * @param userDetails Authenticated manager's details
+     * @return Standardized {@link WebResponseDTO} containing list of {@link EmployeeDTO}
+     */
+    @GetMapping(MAANAGER_VIEW_EMPLOYEES)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<WebResponseDTO<List<EmployeeDTO>>> getEmployeesUnderManager(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        //  Validate and fetch manager user
+        User user = userRepository.findByCompanyEmail(userDetails.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Authenticated user not found: {}", userDetails.getUsername());
+                    return new RuntimeException("User not found");
+                });
+
+        log.debug("Manager user found: {} (userId: {})", user.getCompanyEmail(), user.getUserId());
+
+        // Get employee DTO list from service
+        List<EmployeeDTO> employees = employeeService.getEmployeesUnderManager(user.getUserId());
+
+        //  Build WebResponseDTO here in the controller
+        WebResponseDTO<List<EmployeeDTO>> response = WebResponseDTO.<List<EmployeeDTO>>builder()
+                .flag(true)
+                .message(employees.isEmpty()
+                        ? "No employees found under this manager"
+                        : "Employees fetched successfully")
+                .response(employees)
+                .build();
+
+        log.info("Returning {} employees for manager {}", employees.size(), user.getUserId());
+
+        return ResponseEntity.ok(response);
+    }
 }

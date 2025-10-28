@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -230,5 +231,32 @@ public class EmployeeServiceImpl implements EmployeeService {
                     return dto;
                 })
                 .toList();
+    }
+
+    @Override
+    public List<EmployeeDTO> getEmployeesUnderManager(UUID managerUserId) {
+        log.info("Fetching employees under manager userId: {}", managerUserId);
+
+        //  Identify the manager as an Employee
+        Employee manager = employeeRepository.findByUser_UserId(managerUserId)
+                .orElseThrow(() -> {
+                    log.error("Manager not found for userId: {}", managerUserId);
+                    return new RuntimeException("Manager not found for user ID: " + managerUserId);
+                });
+
+        log.debug("Manager found: {} {} (EmployeeId: {})", manager.getFirstName(), manager.getLastName(), manager.getEmployeeId());
+
+        // Fetch all employees reporting to this manager
+        List<Employee> employees = employeeRepository.findByReportingManager_EmployeeId(manager.getEmployeeId());
+        log.info("Found {} employees under manager {}", employees.size(), manager.getEmployeeId());
+
+        // Convert to DTOs
+        List<EmployeeDTO> employeeDTOs = employees.stream()
+                .map(serviceHelper::toEmployeeDTO)
+                .collect(Collectors.toList());
+
+        log.info("Converted {} employees to DTOs successfully", employeeDTOs.size());
+
+        return employeeDTOs;
     }
 }

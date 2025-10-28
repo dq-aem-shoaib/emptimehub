@@ -18,9 +18,10 @@ mail:
 
       Please log in to the Leave Management Portal to approve or reject this request:
 
-      [Approval Link or Portal URL]
+  
       %s
       Thank you,
+      
       Leave Management System
 
     LEAVE_SUBMITTED_EMPLOYEE: |
@@ -44,9 +45,10 @@ mail:
 
       You can track the status of your request anytime from the Leave Management Portal:
 
-      [Portal Link]
+      
       %s
       Thank you,
+      
       Leave Management System
 
     LEAVE_UPDATED_MANAGER: |
@@ -67,9 +69,10 @@ mail:
 
       Please log in to the Leave Management Portal to approve or reject this request:
 
-      [Approval Link or Portal URL]
+      
       %s
       Thank you,
+      
       Leave Management System
 
     LEAVE_UPDATED_EMPLOYEE: |
@@ -90,9 +93,10 @@ mail:
 
       You can track the status of your leave anytime from the Leave Management Portal:
 
-      [Portal Link]
+      
       %s
       Thank you,
+      
       Leave Management System
 
     LEAVE_APPROVED: |
@@ -114,6 +118,7 @@ mail:
       %s
 
       Best regards,
+      
       Leave Management System
 
     LEAVE_REJECTED: |
@@ -133,4 +138,5 @@ mail:
       Thank you for your understanding.
 
       Best regards,
+      
       Leave Management System

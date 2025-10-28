@@ -43,7 +43,7 @@ public class EmployeeDTO {
     private String designation;
     private LocalDate dateOfJoining;
     private BigDecimal rateCard;
-    private Integer availableLeaves;
+    private Double availableLeaves;
     private EnumConstants.EmploymentType employmentType;
     private String companyId;
 

@@ -138,7 +138,7 @@ public class EmployeeLeaveController {
      * @param userDetails Authenticated user details injected by Spring Security.
      * @return ResponseEntity containing WebResponseDTO with the leave details, success flag, and message.
      */
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('EMPLOYEE') OR hasRole('MANAGER') OR hasRole('ADMIN')")
     @GetMapping(EMPLOYEE_LEAVE_BY_ID)
     public ResponseEntity<WebResponseDTO<LeaveResponseDTO>> getLeaveById(
             @PathVariable UUID leaveId,
@@ -340,31 +340,33 @@ public class EmployeeLeaveController {
 
 
     /**
-     * API to fetch approved leaves for the current year for the logged-in employee.
-     * Each leave is returned per day with duration and leave category.
-     *
-     * @param userDetails authenticated user details (username = company email)
-     * @return ResponseEntity with WebResponseDTO containing list of EmployeeLeaveDayDTO
+     * Fetches approved leaves for the current year based on user role (Employee, Manager, Admin).
+     * Managers/Admins can provide employeeId to view other employees’ leaves.
+     * Excludes weekends and holidays from the result.
+     * @return list of approved leave days wrapped in WebResponseDTO.
      */
     @GetMapping(EMPLOYEE_APPROVED_LEAVES)
-    @PreAuthorize("hasRole('ADMIN') OR hasRole('EMPLOYEE') OR hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     public ResponseEntity<WebResponseDTO<List<EmployeeLeaveDayDTO>>> getApprovedLeavesForCurrentYear(
-            @AuthenticationPrincipal UserDetails userDetails,LocalDate currentYear) {
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) UUID employeeId,
+            @RequestParam(required = false) LocalDate currentYear) {
 
         String companyMail = userDetails.getUsername();
-        log.info("Received request to fetch approved leaves for: {}", companyMail);
+        log.info("Request to fetch approved leaves for year: {}, by user: {}", currentYear, companyMail);
 
-        List<EmployeeLeaveDayDTO> leaveDays = leaveService.getApprovedLeavesForCurrentYear(companyMail,currentYear);
-
-        log.info("Returning {} leave day entries for employee: {}", leaveDays.size(), companyMail);
+        List<EmployeeLeaveDayDTO> leaveDays = leaveService.getApprovedLeavesForCurrentYear(
+                companyMail, employeeId, currentYear
+        );
 
         WebResponseDTO<List<EmployeeLeaveDayDTO>> response = WebResponseDTO.<List<EmployeeLeaveDayDTO>>builder()
                 .flag(true)
                 .status(200)
-                .message("Approved leaves for current year fetched successfully")
+                .message("Approved leaves fetched successfully")
                 .response(leaveDays)
                 .build();
 
         return ResponseEntity.ok(response);
     }
+
 }

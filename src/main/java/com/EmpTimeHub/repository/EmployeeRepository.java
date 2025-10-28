@@ -23,5 +23,11 @@ public interface EmployeeRepository extends JpaRepository<Employee,UUID> {
     List<Employee> findByDesignation(EnumConstants.Designation designation);
     Optional<Employee> findFirstByOrderByCreatedAtDesc();
 
-
+    /**
+     * Finds all employees who report to the given manager.
+     *
+     * @param reportingManagerId UUID of the reporting manager
+     * @return List of employees who report to this manager
+     */
+    List<Employee> findByReportingManager_EmployeeId(UUID reportingManagerId);
 }

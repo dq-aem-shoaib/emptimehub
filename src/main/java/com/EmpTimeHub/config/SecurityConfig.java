@@ -44,17 +44,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/web/api/v1/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/uploads/images/**"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/web/api/v1/user/register").permitAll()
-                     .requestMatchers( "/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
+                .requestMatchers(
+                        "/web/api/v1/auth/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/uploads/images/**",
+                        "/ws/**","/web/api/v1/notification/**"
+                ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/web/api/v1/user/register").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(eh -> eh
